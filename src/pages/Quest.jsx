@@ -1,20 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import styled from 'styled-components';
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
+import { YMaps, Map, Placemark, Polyline } from 'react-yandex-maps';
 import CompletionModal from '../components/CompletionModal';
-import { isTelegramWebApp, getInitData, getUserId, initTelegramWebApp } from '../utils/telegram';
+import { initTelegramWebApp } from '../utils/telegram';
 import { getRouteById } from '../api';
-
-// Исправление иконки маркера для Leaflet
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
 
 const QuestContainer = styled.div`
   background-color: #F8F9FA;
@@ -61,13 +51,6 @@ const PointsList = styled.div`
   background: white;
   border-radius: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-`;
-
-const PointsTitle = styled.h3`
-  font-size: 18px;
-  font-weight: 600;
-  color: #333;
-  margin: 0 0 16px 0;
 `;
 
 const PointCard = styled.div`
@@ -253,52 +236,9 @@ const ConfirmButton = styled.button`
 
 const LocationRequestModal = styled(ConfirmModal)``;
 
-const LocationRequestContent = styled(ConfirmContent)``;
-
 const NotificationModal = styled(ConfirmModal)``;
 
 const NotificationContent = styled(ConfirmContent)``;
-
-// Моковые данные для разработки
-const mockQuest = {
-  id: 1,
-  title: 'Исторический центр',
-  description: 'Познакомьтесь с историей города через его главные достопримечательности',
-  points: [
-    {
-      id: 1,
-      title: 'Площадь Республики',
-      description: 'Главная площадь города',
-      coordinates: {
-        lat: 56.1322,
-        lng: 47.2519
-      },
-      audio: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-      image: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?w=500&auto=format&fit=crop&q=60'
-    },
-    {
-      id: 2,
-      title: 'Парк Победы',
-      description: 'Центральный парк культуры и отдыха',
-      coordinates: {
-        lat: 56.1289,
-        lng: 47.2456
-      },
-      audio: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
-      image: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=500&auto=format&fit=crop&q=60'
-    }
-  ],
-  route: {
-    type: 'Feature',
-    geometry: {
-      type: 'LineString',
-      coordinates: [
-        [56.1322, 47.2519],
-        [56.1289, 47.2456]
-      ]
-    }
-  }
-};
 
 // Функция для расчета расстояния между двумя точками в километрах
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -326,7 +266,6 @@ const Quest = () => {
   const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
   const [showLocationRequest, setShowLocationRequest] = useState(false);
   const [startTime, setStartTime] = useState(null);
-  const [totalDistance, setTotalDistance] = useState(0);
   const [currentAudio, setCurrentAudio] = useState(null);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
@@ -336,7 +275,7 @@ const Quest = () => {
     fetchQuestData();
     requestLocation();
     setStartTime(new Date());
-  }, [id]);
+  }, [id, fetchQuestData]);
 
   const fetchQuestData = async () => {
     try {
@@ -519,50 +458,48 @@ const Quest = () => {
       <CloseButton onClick={() => setShowExitConfirm(true)}>✕</CloseButton>
       
       <MapWrapper>
-        <MapContainer
-          center={quest.points && quest.points.length > 0 ? [quest.points[0].point.latitude, quest.points[0].point.longitude] : [0, 0]}
-          zoom={13}
-          style={{ height: '100%', width: '100%' }}
-        >
-          <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          />
-          
-          {quest.points.map(({ point }) => (
-            <Marker
-              key={point.id}
-              position={[point.latitude, point.longitude]}
-              eventHandlers={{
-                click: () => handlePointClick(point),
+        {quest.points && quest.points.length > 0 && (
+          <YMaps>
+            <Map
+              defaultState={{
+                center: [quest.points[0].point.latitude, quest.points[0].point.longitude],
+                zoom: 13
               }}
+              width="100%"
+              height="100%"
             >
-              <Popup>
-                <h3>{point.name}</h3>
-                <p>{point.description}</p>
-              </Popup>
-            </Marker>
-          ))}
-          
-          {userLocation && (
-            <Marker
-              position={userLocation}
-              icon={L.divIcon({
-                className: 'user-location',
-                html: '<div class="user-marker"></div>',
-              })}
-            />
-          )}
-          
-          {quest.points && quest.points.length > 1 && (
-            <Polyline
-              positions={quest.points.map(({ point }) => [point.latitude, point.longitude])}
-              color="#2196F3"
-              weight={3}
-              opacity={0.7}
-            />
-          )}
-        </MapContainer>
+              {quest.points.map(({ point }, index) => (
+                <Placemark
+                  key={point.id}
+                  geometry={[point.latitude, point.longitude]}
+                  properties={{
+                    balloonContent: `
+                      <div style="padding: 10px; max-width: 200px;">
+                        <h3 style="margin: 0 0 5px 0; font-size: 16px;">${point.name}</h3>
+                        <p style="margin: 0; font-size: 14px; color: #666;">${point.description}</p>
+                      </div>
+                    `
+                  }}
+                  options={{
+                    preset: visitedPoints.has(point.id) ? 'islands#greenDotIcon' : 'islands#blueDotIcon'
+                  }}
+                  onClick={() => handlePointClick(point)}
+                />
+              ))}
+              
+              {quest.points.length > 1 && (
+                <Polyline
+                  geometry={quest.points.map(({ point }) => [point.latitude, point.longitude])}
+                  options={{
+                    strokeColor: '#2196F3',
+                    strokeWidth: 3,
+                    strokeOpacity: 0.8
+                  }}
+                />
+              )}
+            </Map>
+          </YMaps>
+        )}
       </MapWrapper>
 
       <PointsList>
@@ -678,7 +615,6 @@ const Quest = () => {
           onClose={() => navigate('/')}
           pointsVisited={visitedPoints.size}
           totalPoints={quest.points.length}
-          distance={totalDistance}
           time={startTime ? Math.floor((new Date() - startTime) / 1000 / 60) : 0}
         />
       )}

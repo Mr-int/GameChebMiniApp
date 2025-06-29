@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import StartQuestModal from '../components/StartQuestModal';
-import { isTelegramWebApp, getInitData, getUserId, initTelegramWebApp } from '../utils/telegram';
-import { getQuests, setAuthToken } from '../api';
+import { initTelegramWebApp } from '../utils/telegram';
+import { getQuests } from '../api';
 
 const HomeContainer = styled.div`
   background-color: white;
@@ -79,40 +79,6 @@ const QuestDescription = styled.p`
   margin: 0;
   line-height: 1.5;
 `;
-
-// Моковые данные для разработки
-const mockQuests = [
-  {
-    id: 1,
-    title: 'Исторический центр',
-    description: 'Познакомьтесь с историей города через его главные достопримечательности',
-    image: 'https://images.unsplash.com/photo-1513326738677-b964603b136d?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
-    duration: 120,
-    distance: 3.5,
-    pointsCount: 8,
-    difficulty: 'easy'
-  },
-  {
-    id: 2,
-    title: 'Архитектурный тур',
-    description: 'Исследуйте уникальные здания и сооружения города',
-    image: 'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
-    duration: 90,
-    distance: 2.8,
-    pointsCount: 6,
-    difficulty: 'medium'
-  },
-  {
-    id: 3,
-    title: 'Парки и сады',
-    description: 'Откройте для себя зеленые уголки города',
-    image: 'https://images.unsplash.com/photo-1494522358650-8cfd4a457518?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
-    duration: 150,
-    distance: 4.2,
-    pointsCount: 10,
-    difficulty: 'hard'
-  }
-];
 
 const Home = () => {
   const navigate = useNavigate();
