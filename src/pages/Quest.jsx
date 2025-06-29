@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { YMaps, Map, Placemark, Polyline } from 'react-yandex-maps';
@@ -270,14 +270,7 @@ const Quest = () => {
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
 
-  useEffect(() => {
-    initTelegramWebApp();
-    fetchQuestData();
-    requestLocation();
-    setStartTime(new Date());
-  }, [id, fetchQuestData]);
-
-  const fetchQuestData = async () => {
+  const fetchQuestData = useCallback(async () => {
     try {
       setLoading(true);
       const data = await getRouteById(id);
@@ -288,13 +281,20 @@ const Quest = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  const requestLocation = () => {
+  const requestLocation = useCallback(() => {
     if (navigator.geolocation) {
       setShowLocationRequest(true);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    initTelegramWebApp();
+    fetchQuestData();
+    requestLocation();
+    setStartTime(new Date());
+  }, [id, fetchQuestData, requestLocation]);
 
   const handleLocationAllow = () => {
     navigator.geolocation.getCurrentPosition(

@@ -113,25 +113,6 @@ const Home = () => {
   const handleStartQuest = async () => {
     if (selectedQuest) {
       try {
-        // TODO: Реализовать отправку данных на бэкенд
-        // const headers = {
-        //   'Content-Type': 'application/json',
-        // };
-        // if (isTelegramWebApp()) {
-        //   headers['Authorization'] = `Bearer ${getInitData()}`;
-        // }
-        // const response = await fetch(`https://api.gamecheb.ru/api/quests/${selectedQuest.id}/start`, {
-        //   method: 'POST',
-        //   headers,
-        //   body: JSON.stringify({
-        //     userId: getUserId(),
-        //     startTime: new Date().toISOString(),
-        //   }),
-        // });
-        // if (!response.ok) {
-        //   throw new Error('Не удалось начать квест');
-        // }
-        
         navigate(`/quest/${selectedQuest.id}`);
       } catch (err) {
         console.error('Ошибка при начале квеста:', err);
