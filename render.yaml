@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: gamecheb-miniapp
+    env: static
+    buildCommand: npm ci --legacy-peer-deps && npm run build
+    staticPublishPath: ./build
+    envVars:
+      - key: NODE_VERSION
+        value: 18.0.0 
