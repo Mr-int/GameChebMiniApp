@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export const api = axios.create({
-  // baseURL не указываем, чтобы работал proxy
+  baseURL: 'https://gamechebservice-1.onrender.com',
 });
 
 export async function getQuests() {
