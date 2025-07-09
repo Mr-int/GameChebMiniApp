@@ -150,13 +150,7 @@ const Home = () => {
         {Array.isArray(quests) && quests.map((quest) => (
           <QuestCard key={quest.id} onClick={() => handleQuestClick(quest)}>
             <QuestImage 
-              src={
-                quest.photo
-                  ? (quest.photo.startsWith('http')
-                      ? quest.photo
-                      : `https://gamechebminiapp.onrender.com${quest.photo}`)
-                  : '/default-quest.jpg'
-              }
+              src={'/forest.jpg'}
               alt={quest.name} 
             />
             <QuestContent>
