@@ -149,7 +149,16 @@ const Home = () => {
       <QuestsGrid>
         {Array.isArray(quests) && quests.map((quest) => (
           <QuestCard key={quest.id} onClick={() => handleQuestClick(quest)}>
-            <QuestImage src={'/default-quest.jpg'} alt={quest.name} />
+            <QuestImage 
+              src={
+                quest.photo
+                  ? (quest.photo.startsWith('http')
+                      ? quest.photo
+                      : `https://gamechebservice-1.onrender.com${quest.photo}`)
+                  : '/default-quest.jpg'
+              }
+              alt={quest.name} 
+            />
             <QuestContent>
               <QuestTitle>{quest.name}</QuestTitle>
               <QuestDescription>{quest.description}</QuestDescription>

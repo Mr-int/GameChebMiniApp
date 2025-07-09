@@ -505,7 +505,16 @@ const Quest = () => {
       <PointsList>
         {quest.points.map(({ point }, index) => (
           <PointCard key={point.id} onClick={() => handlePointClick(point)}>
-            <PointImage src={point.photo ? point.photo : '/default-quest.jpg'} alt={point.name} />
+            <PointImage 
+              src={
+                point.photo
+                  ? (point.photo.startsWith('http')
+                      ? point.photo
+                      : `https://gamechebservice-1.onrender.com${point.photo}`)
+                  : '/default-quest.jpg'
+              }
+              alt={point.name} 
+            />
             <PointInfo>
               <PointTitle>{point.name}</PointTitle>
               <PointDescription>{point.description}</PointDescription>
