@@ -154,7 +154,7 @@ const Home = () => {
                 quest.photo
                   ? (quest.photo.startsWith('http')
                       ? quest.photo
-                      : `https://gamechebservice-1.onrender.com${quest.photo}`)
+                      : `https://gamechebminiapp.onrender.com${quest.photo}`)
                   : '/default-quest.jpg'
               }
               alt={quest.name} 

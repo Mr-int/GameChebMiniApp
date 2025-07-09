@@ -510,7 +510,7 @@ const Quest = () => {
                 point.photo
                   ? (point.photo.startsWith('http')
                       ? point.photo
-                      : `https://gamechebservice-1.onrender.com${point.photo}`)
+                      : `https://gamechebminiapp.onrender.com${point.photo}`)
                   : '/default-quest.jpg'
               }
               alt={point.name} 
