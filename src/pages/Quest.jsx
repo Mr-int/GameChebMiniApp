@@ -507,11 +507,7 @@ const Quest = () => {
           <PointCard key={point.id} onClick={() => handlePointClick(point)}>
             <PointImage 
               src={
-                point.photo
-                  ? (point.photo.startsWith('http')
-                      ? point.photo
-                      : `https://gamechebservice-1.onrender.com${point.photo}`)
-                  : '/default-quest.jpg'
+                'https://gamechebservice-1.onrender.com/media/points/photos/AgACAgIAAxkBAAIB02gjiCIaJpLkN72gHltBwTRw_UAWAAIK8jEbJocYSTXkYfR2qViAAQADAg_kJhNJXC.jpg'
               }
               alt={point.name} 
             />
