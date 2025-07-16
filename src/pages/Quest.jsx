@@ -502,11 +502,7 @@ const Quest = () => {
               >
                 <Popup>
                   <div style={{ maxWidth: 220 }}>
-                    <h3 style={{ margin: '0 0 5px 0', fontSize: 16 }}>{point.name}</h3>
-                    <p style={{ margin: 0, fontSize: 14, color: '#666' }}>{point.description}</p>
-                    {point.video_file && (
-                      <video controls style={{ width: '100%', marginTop: 8 }} src={`https://storage.yandexcloud.net/gamecheb/media/get_video_path/${point.video_file}`} />
-                    )}
+                    <pre style={{ fontSize: 10, color: '#333', background: '#f5f5f5', padding: 8, borderRadius: 8, overflowX: 'auto' }}>{JSON.stringify(point, null, 2)}</pre>
                   </div>
                 </Popup>
               </Marker>
