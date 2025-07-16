@@ -6,6 +6,7 @@ import styled from 'styled-components';
 // Импортирую компоненты react-leaflet:
 import { MapContainer, TileLayer, Marker, Polyline, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
 import CompletionModal from '../components/CompletionModal';
 import { initTelegramWebApp } from '../utils/telegram';
 import { getRouteById } from '../api';
@@ -439,6 +440,15 @@ const Quest = () => {
     };
   }, [currentAudio]);
 
+  const customMarkerIcon = new L.Icon({
+    iconUrl: '/marker-icon.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    shadowSize: [41, 41],
+  });
+
   if (loading) {
     return (
       <QuestContainer>
@@ -477,6 +487,7 @@ const Quest = () => {
               <Marker
                 key={point.id}
                 position={[point.latitude, point.longitude]}
+                icon={customMarkerIcon}
                 eventHandlers={{
                   click: () => handlePointClick(point)
                 }}
