@@ -7,9 +7,16 @@ import styled from 'styled-components';
 import { MapContainer, TileLayer, Marker, Polyline, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import { createGlobalStyle } from 'styled-components';
 import CompletionModal from '../components/CompletionModal';
 import { initTelegramWebApp } from '../utils/telegram';
 import { getRouteById } from '../api';
+
+const HideAttribution = createGlobalStyle`
+  .leaflet-control-attribution {
+    display: none !important;
+  }
+`;
 
 const QuestContainer = styled.div`
   background-color: #F8F9FA;
@@ -469,6 +476,7 @@ const Quest = () => {
 
   return (
     <QuestContainer>
+      <HideAttribution />
       <CloseButton onClick={() => setShowExitConfirm(true)}>✕</CloseButton>
       
       <MapWrapper>
@@ -496,12 +504,8 @@ const Quest = () => {
                   <div style={{ maxWidth: 220 }}>
                     <h3 style={{ margin: '0 0 5px 0', fontSize: 16 }}>{point.name}</h3>
                     <p style={{ margin: 0, fontSize: 14, color: '#666' }}>{point.description}</p>
-                    {point.video_file ? (
+                    {point.video_file && (
                       <video controls style={{ width: '100%', marginTop: 8 }} src={`https://storage.yandexcloud.net/gamecheb/media/get_video_path/${point.video_file}`} />
-                    ) : point.audio_file ? (
-                      <audio controls style={{ width: '100%', marginTop: 8 }} src={`https://storage.yandexcloud.net/gamecheb/media/get_audio_path/${point.audio_file}`} />
-                    ) : (
-                      <div style={{ color: '#999', marginTop: 8 }}>Без видео/аудио</div>
                     )}
                   </div>
                 </Popup>
@@ -526,7 +530,6 @@ const Quest = () => {
             />
             <PointInfo>
               <PointTitle>{point.name}</PointTitle>
-              <PointDescription>{point.description}</PointDescription>
               {point.audio_file && (
                 <AudioPlayer
                   controls
