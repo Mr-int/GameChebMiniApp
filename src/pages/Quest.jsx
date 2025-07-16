@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import styled from 'styled-components';
-import { YMaps, Map, Placemark, Polyline } from 'react-yandex-maps';
+// Удаляю импорт Яндекс.Карт:
+// import { YMaps, Map, Placemark, Polyline } from 'react-yandex-maps';
+// Импортирую компоненты react-leaflet:
+import { MapContainer, TileLayer, Marker, Polyline, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
 import CompletionModal from '../components/CompletionModal';
 import { initTelegramWebApp } from '../utils/telegram';
 import { getRouteById } from '../api';
@@ -459,46 +463,46 @@ const Quest = () => {
       
       <MapWrapper>
         {quest.points && quest.points.length > 0 && (
-          <YMaps>
-            <Map
-              defaultState={{
-                center: [quest.points[0].point.latitude, quest.points[0].point.longitude],
-                zoom: 13
-              }}
-              width="100%"
-              height="100%"
-            >
-              {quest.points.map(({ point }, index) => (
-                <Placemark
-                  key={point.id}
-                  geometry={[point.latitude, point.longitude]}
-                  properties={{
-                    balloonContent: `
-                      <div style="padding: 10px; max-width: 200px;">
-                        <h3 style="margin: 0 0 5px 0; font-size: 16px;">${point.name}</h3>
-                        <p style="margin: 0; font-size: 14px; color: #666;">${point.description}</p>
-                      </div>
-                    `
-                  }}
-                  options={{
-                    preset: visitedPoints.has(point.id) ? 'islands#greenDotIcon' : 'islands#blueDotIcon'
-                  }}
-                  onClick={() => handlePointClick(point)}
-                />
-              ))}
-              
-              {quest.points.length > 1 && (
-                <Polyline
-                  geometry={quest.points.map(({ point }) => [point.latitude, point.longitude])}
-                  options={{
-                    strokeColor: '#2196F3',
-                    strokeWidth: 3,
-                    strokeOpacity: 0.8
-                  }}
-                />
-              )}
-            </Map>
-          </YMaps>
+          <MapContainer
+            center={[quest.points[0].point.latitude, quest.points[0].point.longitude]}
+            zoom={13}
+            style={{ width: '100%', height: '100%' }}
+            scrollWheelZoom={true}
+          >
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
+            />
+            {quest.points.map(({ point }, index) => (
+              <Marker
+                key={point.id}
+                position={[point.latitude, point.longitude]}
+                eventHandlers={{
+                  click: () => handlePointClick(point)
+                }}
+              >
+                <Popup>
+                  <div style={{ maxWidth: 220 }}>
+                    <h3 style={{ margin: '0 0 5px 0', fontSize: 16 }}>{point.name}</h3>
+                    <p style={{ margin: 0, fontSize: 14, color: '#666' }}>{point.description}</p>
+                    {point.video_file ? (
+                      <video controls style={{ width: '100%', marginTop: 8 }} src={`https://storage.yandexcloud.net/gamecheb/media/get_video_path/${point.video_file}`} />
+                    ) : point.audio_file ? (
+                      <audio controls style={{ width: '100%', marginTop: 8 }} src={`https://storage.yandexcloud.net/gamecheb/media/get_audio_path/${point.audio_file}`} />
+                    ) : (
+                      <div style={{ color: '#999', marginTop: 8 }}>Без видео/аудио</div>
+                    )}
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
+            {quest.points.length > 1 && (
+              <Polyline
+                positions={quest.points.map(({ point }) => [point.latitude, point.longitude])}
+                pathOptions={{ color: '#2196F3', weight: 3, opacity: 0.8 }}
+              />
+            )}
+          </MapContainer>
         )}
       </MapWrapper>
 
@@ -506,10 +510,8 @@ const Quest = () => {
         {quest.points.map(({ point }, index) => (
           <PointCard key={point.id} onClick={() => handlePointClick(point)}>
             <PointImage 
-              src={
-                'https://gamechebservice-1.onrender.com/media/points/photos/AgACAgIAAxkBAAIB02gjiCIaJpLkN72gHltBwTRw_UAWAAIK8jEbJocYSTXkYfR2qViAAQADAg_kJhNJXC.jpg'
-              }
-              alt={point.name} 
+              src={point.photo ? `https://storage.yandexcloud.net/gamecheb/media/get_photo_path/${point.photo}` : ''}
+              alt={point.name}
             />
             <PointInfo>
               <PointTitle>{point.name}</PointTitle>
@@ -517,8 +519,8 @@ const Quest = () => {
               {point.audio_file && (
                 <AudioPlayer
                   controls
-                  src={point.audio_file}
-                  onPlay={() => handleAudioPlay(point.audio_file)}
+                  src={`https://storage.yandexcloud.net/gamecheb/media/get_audio_path/${point.audio_file}`}
+                  onPlay={() => handleAudioPlay(`https://storage.yandexcloud.net/gamecheb/media/get_audio_path/${point.audio_file}`)}
                   onPause={handleAudioPause}
                 />
               )}
