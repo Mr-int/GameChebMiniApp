@@ -50,7 +50,7 @@ const CloseButton = styled.button`
 `;
 
 const MapWrapper = styled.div`
-  height: 300px;
+  height: 500px;
   margin: 16px 0;
   border-radius: 16px;
   overflow: hidden;
@@ -502,10 +502,13 @@ const Quest = () => {
               >
                 <Popup>
                   <div style={{ maxWidth: 220 }}>
+                    {point.photo && (
+                      <img src={point.photo} alt={point.name} style={{ width: '100%', borderRadius: 8, marginBottom: 8 }} />
+                    )}
                     <h3 style={{ margin: '0 0 5px 0', fontSize: 16 }}>{point.name}</h3>
                     <p style={{ margin: 0, fontSize: 14, color: '#666' }}>{point.description}</p>
                     {point.video_file && (
-                      <video controls style={{ width: '100%', marginTop: 8 }} src={`https://storage.yandexcloud.net/gamecheb/media/get_video_path/${point.video_file}`} />
+                      <video controls style={{ width: '100%', marginTop: 8 }} src={point.video_file} />
                     )}
                   </div>
                 </Popup>
@@ -517,6 +520,23 @@ const Quest = () => {
                 pathOptions={{ color: '#2196F3', weight: 3, opacity: 0.8 }}
               />
             )}
+            {/* Marker для геолокации пользователя */}
+            {userLocation && (
+              <Marker
+                position={userLocation}
+                icon={new L.Icon({
+                  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+                  iconSize: [30, 48],
+                  iconAnchor: [15, 48],
+                  popupAnchor: [1, -34],
+                  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+                  shadowSize: [48, 48],
+                  className: 'user-location-marker',
+                })}
+              >
+                <Popup>Вы здесь</Popup>
+              </Marker>
+            )}
           </MapContainer>
         )}
       </MapWrapper>
@@ -525,7 +545,7 @@ const Quest = () => {
         {quest.points.map(({ point }, index) => (
           <PointCard key={point.id} onClick={() => handlePointClick(point)}>
             <PointImage 
-              src={point.photo ? `https://storage.yandexcloud.net/gamecheb/media/get_photo_path/${point.photo}` : ''}
+              src={point.photo ? point.photo : ''}
               alt={point.name}
             />
             <PointInfo>
@@ -533,8 +553,8 @@ const Quest = () => {
               {point.audio_file && (
                 <AudioPlayer
                   controls
-                  src={`https://storage.yandexcloud.net/gamecheb/media/get_audio_path/${point.audio_file}`}
-                  onPlay={() => handleAudioPlay(`https://storage.yandexcloud.net/gamecheb/media/get_audio_path/${point.audio_file}`)}
+                  src={point.audio_file}
+                  onPlay={() => handleAudioPlay(point.audio_file)}
                   onPause={handleAudioPause}
                 />
               )}
