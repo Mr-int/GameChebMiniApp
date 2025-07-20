@@ -648,7 +648,7 @@ const Quest = () => {
               <PointInfo>
                 <PointTitle>
                   {point.name}
-                  {index === currentPointIndex && (
+                  {index === currentPointIndex && index !== quest.points.length - 1 && (
                     <StyledManualOpenButton
                       onClick={e => { e.stopPropagation(); handleManualOpen(); }}
                       disabled={cooldown !== 0}
