@@ -437,44 +437,10 @@ const Quest = () => {
     setShowPointModal(true);
   };
 
-  const handleCompleteQuest = async () => {
-    try {
-      // Проверяем, что все точки посещены
-      if (visitedPoints.size !== quest.points.length) {
-        showError('Вы посетили не все точки квеста!');
-        return;
-      }
-
-      // TODO: Реализовать отправку данных на бэкенд
-      // const headers = {
-      //   'Content-Type': 'application/json',
-      // };
-      // if (isTelegramWebApp()) {
-      //   headers['Authorization'] = `Bearer ${getInitData()}`;
-      // }
-      // const response = await fetch(`https://api.gamecheb.ru/api/quests/${id}/complete`, {
-      //   method: 'POST',
-      //   headers,
-      //   body: JSON.stringify({
-      //     userId: getUserId(),
-      //     endTime: new Date().toISOString(),
-      //     distance: totalDistance,
-      //     pointsVisited: visitedPoints.size,
-      //   }),
-      // });
-      // if (!response.ok) {
-      //   throw new Error('Не удалось завершить квест');
-      // }
-      // const data = await response.json();
-
-      // Закрываем модальное окно подтверждения
-      setShowCompleteConfirm(false);
-      // Показываем модальное окно завершения
-      setShowCompletionModal(true);
-    } catch (err) {
-      console.error('Ошибка при завершении квеста:', err);
-      showError('Произошла ошибка при завершении квеста');
-    }
+  // handleCompleteQuest теперь просто выходит на главную
+  const handleCompleteQuest = () => {
+    navigate('/');
+    // Здесь можно вызвать глобальное событие или setState для показа поздравительной модалки вне Quest
   };
 
   const handleAudioPlay = (audioUrl) => {
@@ -753,15 +719,6 @@ const Quest = () => {
             </ButtonGroup>
           </NotificationContent>
         </NotificationModal>
-      )}
-
-      {showCompletionModal && (
-        <CompletionModal
-          onClose={() => navigate('/')}
-          pointsVisited={visitedPoints.size}
-          totalPoints={quest.points.length}
-          time={startTime ? Math.floor((new Date() - startTime) / 1000 / 60) : 0}
-        />
       )}
 
       {showPointModal && selectedPoint && (
