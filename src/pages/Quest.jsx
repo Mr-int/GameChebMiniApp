@@ -277,6 +277,31 @@ const LocateButton = styled.button`
   }
 `;
 
+const StyledManualOpenButton = styled.button`
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px 0;
+  background: #2196F3;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(33,150,243,0.10);
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  &:hover:enabled {
+    background: #1976D2;
+    box-shadow: 0 4px 16px rgba(33,150,243,0.18);
+  }
+  &:disabled {
+    background: #BDBDBD;
+    color: #eee;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+`;
+
 function LocateControl({ userLocation }) {
   const map = useMap();
   if (!userLocation) return null;
@@ -626,9 +651,12 @@ const Quest = () => {
                 {visitedPoints.has(point.id) ? '✓' : index + 1}
               </PointStatus>
               {index === currentPointIndex && (
-                <button onClick={e => { e.stopPropagation(); handleManualOpen(); }} disabled={cooldown !== 0} style={{marginLeft:16}}>
+                <StyledManualOpenButton
+                  onClick={e => { e.stopPropagation(); handleManualOpen(); }}
+                  disabled={cooldown !== 0}
+                >
                   Открыть вручную {cooldown > 0 ? `(осталось ${Math.ceil(cooldown/60)} мин)` : ''}
-                </button>
+                </StyledManualOpenButton>
               )}
             </PointCard>
           ) : null
