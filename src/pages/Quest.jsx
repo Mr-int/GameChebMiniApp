@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 // Удаляю импорт Яндекс.Карт:
@@ -252,6 +252,9 @@ const NotificationModal = styled(ConfirmModal)``;
 
 const NotificationContent = styled(ConfirmContent)``;
 
+const PointModalOverlay = styled(ConfirmModal)``;
+const PointModalContent = styled(ConfirmContent)`max-width: 500px;`;
+
 // Функция для расчета расстояния между двумя точками в километрах
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
   const R = 6371; // Радиус Земли в километрах
@@ -281,6 +284,9 @@ const Quest = () => {
   const [currentAudio, setCurrentAudio] = useState(null);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
+  const [selectedPoint, setSelectedPoint] = useState(null);
+  const [showPointModal, setShowPointModal] = useState(false);
+  const audioRef = useRef(null);
 
   const fetchQuestData = useCallback(async () => {
     try {
@@ -362,21 +368,8 @@ const Quest = () => {
   };
 
   const handlePointClick = (point) => {
-    if (!userLocation) {
-      setShowLocationRequest(true);
-      return;
-    }
-    const distance = calculateDistance(
-      userLocation[0],
-      userLocation[1],
-      point.latitude,
-      point.longitude
-    );
-    if (distance <= 0.05) {
-      handlePointVisit(point.id);
-    } else {
-      showError(`Подойдите ближе к точке. Осталось ${(distance * 1000).toFixed(0)} метров`);
-    }
+    setSelectedPoint(point);
+    setShowPointModal(true);
   };
 
   const handleCompleteQuest = async () => {
@@ -420,32 +413,30 @@ const Quest = () => {
   };
 
   const handleAudioPlay = (audioUrl) => {
-    if (currentAudio) {
-      currentAudio.pause();
-      currentAudio.currentTime = 0;
+    if (audioRef.current) {
+      if (audioRef.current.src !== audioUrl) {
+        audioRef.current.src = audioUrl;
+      }
+      audioRef.current.currentTime = 0;
+      audioRef.current.play();
     }
-    const audio = new Audio(audioUrl);
-    audio.play();
-    setCurrentAudio(audio);
   };
-
   const handleAudioPause = () => {
-    if (currentAudio) {
-      currentAudio.pause();
-      currentAudio.currentTime = 0;
-      setCurrentAudio(null);
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
     }
   };
 
   // Добавляем очистку при размонтировании компонента
   useEffect(() => {
     return () => {
-      if (currentAudio) {
-        currentAudio.pause();
-        currentAudio.src = '';
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
       }
     };
-  }, [currentAudio]);
+  }, []);
 
   const customMarkerIcon = new L.Icon({
     iconUrl: '/marker-icon.png',
@@ -551,12 +542,9 @@ const Quest = () => {
             <PointInfo>
               <PointTitle>{point.name}</PointTitle>
               {point.audio_file && (
-                <AudioPlayer
-                  controls
-                  src={point.audio_file}
-                  onPlay={() => handleAudioPlay(point.audio_file)}
-                  onPause={handleAudioPause}
-                />
+                <button onClick={e => { e.stopPropagation(); handleAudioPlay(point.audio_file); }}>
+                  ▶️ Аудио
+                </button>
               )}
             </PointInfo>
             <PointStatus $visited={visitedPoints.has(point.id)}>
@@ -658,6 +646,33 @@ const Quest = () => {
           totalPoints={quest.points.length}
           time={startTime ? Math.floor((new Date() - startTime) / 1000 / 60) : 0}
         />
+      )}
+
+      {showPointModal && selectedPoint && (
+        <PointModalOverlay>
+          <PointModalContent>
+            <ConfirmTitle>{selectedPoint.name}</ConfirmTitle>
+            {selectedPoint.photo && (
+              <img src={selectedPoint.photo} alt={selectedPoint.name} style={{ width: '100%', borderRadius: 8, marginBottom: 8 }} />
+            )}
+            {selectedPoint.description && (
+              <PointDescription>{selectedPoint.description}</PointDescription>
+            )}
+            {selectedPoint.video_file && (
+              <video controls style={{ width: '100%', marginTop: 8 }} src={selectedPoint.video_file} />
+            )}
+            {selectedPoint.audio_file && (
+              <div style={{ marginTop: 12 }}>
+                <audio ref={audioRef} controls src={selectedPoint.audio_file} style={{ width: '100%' }} />
+              </div>
+            )}
+            <ButtonGroup>
+              <ConfirmButton className="primary" onClick={() => setShowPointModal(false)}>
+                Закрыть
+              </ConfirmButton>
+            </ButtonGroup>
+          </PointModalContent>
+        </PointModalOverlay>
       )}
     </QuestContainer>
   );
