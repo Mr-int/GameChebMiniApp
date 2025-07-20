@@ -4,7 +4,7 @@ import styled from 'styled-components';
 // Удаляю импорт Яндекс.Карт:
 // import { YMaps, Map, Placemark, Polyline } from 'react-yandex-maps';
 // Импортирую компоненты react-leaflet:
-import { MapContainer, TileLayer, Marker, Polyline, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Polyline, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { createGlobalStyle } from 'styled-components';
@@ -254,6 +254,38 @@ const NotificationContent = styled(ConfirmContent)``;
 
 const PointModalOverlay = styled(ConfirmModal)``;
 const PointModalContent = styled(ConfirmContent)`max-width: 500px;`;
+
+const LocateButton = styled.button`
+  position: absolute;
+  bottom: 32px;
+  right: 32px;
+  z-index: 1200;
+  background: white;
+  border: none;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  font-size: 24px;
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+  &:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.22);
+  }
+`;
+
+function LocateControl({ userLocation }) {
+  const map = useMap();
+  if (!userLocation) return null;
+  return (
+    <LocateButton title="К моему местоположению" onClick={() => map.flyTo(userLocation, 16)}>
+      <span role="img" aria-label="locate">🧭</span>
+    </LocateButton>
+  );
+}
 
 // Функция для расчета расстояния между двумя точками в километрах
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -528,6 +560,7 @@ const Quest = () => {
                 <Popup>Вы здесь</Popup>
               </Marker>
             )}
+            {userLocation && <LocateControl userLocation={userLocation} />}
           </MapContainer>
         )}
       </MapWrapper>
@@ -660,11 +693,6 @@ const Quest = () => {
             )}
             {selectedPoint.video_file && (
               <video controls style={{ width: '100%', marginTop: 8 }} src={selectedPoint.video_file} />
-            )}
-            {selectedPoint.audio_file && (
-              <div style={{ marginTop: 12 }}>
-                <audio ref={audioRef} controls src={selectedPoint.audio_file} style={{ width: '100%' }} />
-              </div>
             )}
             <ButtonGroup>
               <ConfirmButton className="primary" onClick={() => setShowPointModal(false)}>
