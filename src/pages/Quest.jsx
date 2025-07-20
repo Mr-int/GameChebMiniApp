@@ -516,7 +516,7 @@ const Quest = () => {
           setOpenedPoints(prev => [...prev, currentPointIndex + 1]);
           setCurrentPointIndex(idx => idx + 1);
           setLastOpenTime(Date.now());
-          setCooldown(7 * 60); // 7 минут
+          setCooldown(3); // 3 секунды для теста
         }
       }
     }, 72000); // 1.2 минуты
@@ -541,7 +541,7 @@ const Quest = () => {
       setOpenedPoints(prev => [...prev, currentPointIndex + 1]);
       setCurrentPointIndex(idx => idx + 1);
       setLastOpenTime(Date.now());
-      setCooldown(7 * 60);
+      setCooldown(3); // 3 секунды для теста
     }
   };
 
