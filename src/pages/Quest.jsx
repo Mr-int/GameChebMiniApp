@@ -479,6 +479,11 @@ const Quest = () => {
     shadowSize: [41, 41],
   });
 
+  const userLocationIcon = L.divIcon({
+    className: 'user-location-divicon',
+    html: `<div style="width:28px;height:28px;background:#2196F3;border-radius:50%;border:3px solid #fff;box-shadow:0 0 8px #2196F3;"></div>`
+  });
+
   if (loading) {
     return (
       <QuestContainer>
@@ -547,15 +552,7 @@ const Quest = () => {
             {userLocation && (
               <Marker
                 position={userLocation}
-                icon={new L.Icon({
-                  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-                  iconSize: [30, 48],
-                  iconAnchor: [15, 48],
-                  popupAnchor: [1, -34],
-                  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-                  shadowSize: [48, 48],
-                  className: 'user-location-marker',
-                })}
+                icon={userLocationIcon}
               >
                 <Popup>Вы здесь</Popup>
               </Marker>
@@ -575,9 +572,7 @@ const Quest = () => {
             <PointInfo>
               <PointTitle>{point.name}</PointTitle>
               {point.audio_file && (
-                <button onClick={e => { e.stopPropagation(); handleAudioPlay(point.audio_file); }}>
-                  ▶️ Аудио
-                </button>
+                <audio controls style={{ width: '100%', marginTop: 8 }} src={point.audio_file} />
               )}
             </PointInfo>
             <PointStatus $visited={visitedPoints.has(point.id)}>
