@@ -278,21 +278,25 @@ const LocateButton = styled.button`
 `;
 
 const StyledManualOpenButton = styled.button`
-  width: 100%;
-  margin-top: 12px;
-  padding: 12px 0;
+  height: 32px;
+  min-width: 0;
+  padding: 0 14px;
+  margin-left: 8px;
   background: #2196F3;
   color: #fff;
   border: none;
-  border-radius: 10px;
-  font-size: 16px;
+  border-radius: 8px;
+  font-size: 14px;
   font-weight: 500;
-  box-shadow: 0 2px 8px rgba(33,150,243,0.10);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 1px 4px rgba(33,150,243,0.08);
   cursor: pointer;
   transition: background 0.2s, box-shadow 0.2s;
   &:hover:enabled {
     background: #1976D2;
-    box-shadow: 0 4px 16px rgba(33,150,243,0.18);
+    box-shadow: 0 2px 8px rgba(33,150,243,0.13);
   }
   &:disabled {
     background: #BDBDBD;
@@ -642,7 +646,18 @@ const Quest = () => {
                 alt={point.name}
               />
               <PointInfo>
-                <PointTitle>{point.name}</PointTitle>
+                <PointTitle>
+                  {point.name}
+                  {index === currentPointIndex && (
+                    <StyledManualOpenButton
+                      onClick={e => { e.stopPropagation(); handleManualOpen(); }}
+                      disabled={cooldown !== 0}
+                    >
+                      <span role="img" aria-label="unlock">🔓</span>
+                      Открыть {cooldown > 0 ? `(${Math.ceil(cooldown/60)}м)` : ''}
+                    </StyledManualOpenButton>
+                  )}
+                </PointTitle>
                 {point.audio_file && (
                   <audio controls style={{ width: '100%', marginTop: 8 }} src={point.audio_file} />
                 )}
@@ -650,14 +665,6 @@ const Quest = () => {
               <PointStatus $visited={visitedPoints.has(point.id)}>
                 {visitedPoints.has(point.id) ? '✓' : index + 1}
               </PointStatus>
-              {index === currentPointIndex && (
-                <StyledManualOpenButton
-                  onClick={e => { e.stopPropagation(); handleManualOpen(); }}
-                  disabled={cooldown !== 0}
-                >
-                  Открыть вручную {cooldown > 0 ? `(осталось ${Math.ceil(cooldown/60)} мин)` : ''}
-                </StyledManualOpenButton>
-              )}
             </PointCard>
           ) : null
         ))}
