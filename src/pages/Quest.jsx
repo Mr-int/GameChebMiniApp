@@ -319,6 +319,10 @@ const Quest = () => {
   const [selectedPoint, setSelectedPoint] = useState(null);
   const [showPointModal, setShowPointModal] = useState(false);
   const audioRef = useRef(null);
+  const [currentPointIndex, setCurrentPointIndex] = useState(0);
+  const [openedPoints, setOpenedPoints] = useState([0]); // индексы открытых точек
+  const [lastOpenTime, setLastOpenTime] = useState(Date.now());
+  const [cooldown, setCooldown] = useState(0); // в секундах
 
   const fetchQuestData = useCallback(async () => {
     try {
@@ -470,6 +474,48 @@ const Quest = () => {
     };
   }, []);
 
+  // Проверка приближения к точке раз в 1.2 минуты
+  useEffect(() => {
+    if (!userLocation || !quest || !quest.points) return;
+    if (currentPointIndex >= quest.points.length - 1) return;
+    const interval = setInterval(() => {
+      const point = quest.points[currentPointIndex].point;
+      const dist = calculateDistance(userLocation[0], userLocation[1], point.latitude, point.longitude);
+      if (dist <= 0.1 && cooldown === 0) {
+        // Открываем следующую точку
+        if (currentPointIndex < quest.points.length - 1) {
+          setOpenedPoints(prev => [...prev, currentPointIndex + 1]);
+          setCurrentPointIndex(idx => idx + 1);
+          setLastOpenTime(Date.now());
+          setCooldown(7 * 60); // 7 минут
+        }
+      }
+    }, 72000); // 1.2 минуты
+    return () => clearInterval(interval);
+  }, [userLocation, quest, currentPointIndex, cooldown]);
+
+  // Таймер cooldown
+  useEffect(() => {
+    if (cooldown === 0) return;
+    const timer = setInterval(() => {
+      setCooldown(sec => {
+        if (sec <= 1) return 0;
+        return sec - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
+
+  // Ручное открытие точки
+  const handleManualOpen = () => {
+    if (cooldown === 0 && currentPointIndex < quest.points.length - 1) {
+      setOpenedPoints(prev => [...prev, currentPointIndex + 1]);
+      setCurrentPointIndex(idx => idx + 1);
+      setLastOpenTime(Date.now());
+      setCooldown(7 * 60);
+    }
+  };
+
   const customMarkerIcon = new L.Icon({
     iconUrl: '/marker-icon.png',
     iconSize: [25, 41],
@@ -564,27 +610,34 @@ const Quest = () => {
 
       <PointsList>
         {quest.points.map(({ point }, index) => (
-          <PointCard key={point.id} onClick={() => handlePointClick(point)}>
-            <PointImage 
-              src={point.photo ? point.photo : ''}
-              alt={point.name}
-            />
-            <PointInfo>
-              <PointTitle>{point.name}</PointTitle>
-              {point.audio_file && (
-                <audio controls style={{ width: '100%', marginTop: 8 }} src={point.audio_file} />
+          openedPoints.includes(index) ? (
+            <PointCard key={point.id} onClick={() => handlePointClick(point)}>
+              <PointImage 
+                src={point.photo ? point.photo : ''}
+                alt={point.name}
+              />
+              <PointInfo>
+                <PointTitle>{point.name}</PointTitle>
+                {point.audio_file && (
+                  <audio controls style={{ width: '100%', marginTop: 8 }} src={point.audio_file} />
+                )}
+              </PointInfo>
+              <PointStatus $visited={visitedPoints.has(point.id)}>
+                {visitedPoints.has(point.id) ? '✓' : index + 1}
+              </PointStatus>
+              {index === currentPointIndex && (
+                <button onClick={e => { e.stopPropagation(); handleManualOpen(); }} disabled={cooldown !== 0} style={{marginLeft:16}}>
+                  Открыть вручную {cooldown > 0 ? `(осталось ${Math.ceil(cooldown/60)} мин)` : ''}
+                </button>
               )}
-            </PointInfo>
-            <PointStatus $visited={visitedPoints.has(point.id)}>
-              {visitedPoints.has(point.id) ? '✓' : index + 1}
-            </PointStatus>
-          </PointCard>
+            </PointCard>
+          ) : null
         ))}
       </PointsList>
 
       <CompleteButton
         onClick={() => setShowCompleteConfirm(true)}
-        disabled={visitedPoints.size !== quest.points.length}
+        disabled={currentPointIndex !== quest.points.length - 1}
         className="primary"
       >
         Завершить квест
