@@ -4,11 +4,35 @@ const API_TOKEN = '00d197fe99bd7b7eb8b46d385d9713fe7a6a2d60593aa5634d116f7501eee
 
 export const api = axios.create({
   baseURL: 'https://gamechebservice-1.onrender.com',
+  timeout: 10000, // 10 секунд timeout
   headers: {
     'Authorization': `Token ${API_TOKEN}`,
     'Content-Type': 'application/json',
   }
 });
+
+// Добавляем interceptor для логирования
+api.interceptors.request.use(
+  (config) => {
+    console.log('Отправляем запрос:', config.method?.toUpperCase(), config.url);
+    return config;
+  },
+  (error) => {
+    console.error('Ошибка запроса:', error);
+    return Promise.reject(error);
+  }
+);
+
+api.interceptors.response.use(
+  (response) => {
+    console.log('Получен ответ:', response.status, response.config.url);
+    return response;
+  },
+  (error) => {
+    console.error('Ошибка ответа:', error.response?.status, error.message, error.config?.url);
+    return Promise.reject(error);
+  }
+);
 
 export async function getQuests() {
   try {
