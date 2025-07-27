@@ -5,10 +5,6 @@ const API_TOKEN = '00d197fe99bd7b7eb8b46d385d9713fe7a6a2d60593aa5634d116f7501eee
 export const api = axios.create({
   baseURL: 'https://gamechebservice-1.onrender.com',
   timeout: 10000, // 10 секунд timeout
-  headers: {
-    'Authorization': `Token ${API_TOKEN}`,
-    'Content-Type': 'application/json',
-  }
 });
 
 // Добавляем interceptor для логирования
@@ -36,7 +32,11 @@ api.interceptors.response.use(
 
 export async function getQuests() {
   try {
-    const response = await api.get('/api/routes/');
+    const response = await api.get('/api/routes/', {
+      params: {
+        api_token: API_TOKEN
+      }
+    });
     return response.data;
   } catch (error) {
     console.error('Ошибка запроса к /api/routes/:', error);
@@ -46,7 +46,11 @@ export async function getQuests() {
 
 export async function getRouteById(id) {
   try {
-    const response = await api.get(`/api/routes/${id}/`);
+    const response = await api.get(`/api/routes/${id}/`, {
+      params: {
+        api_token: API_TOKEN
+      }
+    });
     return response.data;
   } catch (error) {
     console.error('Ошибка запроса к /api/routes/' + id + '/', error);
