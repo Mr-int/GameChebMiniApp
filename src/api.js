@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_TOKEN = import.meta.env.VITE_API_TOKEN || '00d197fe99bd7b7eb8b46d385d9713fe7a6a2d60593aa5634d116f7501eee4dc';
+const API_TOKEN = '00d197fe99bd7b7eb8b46d385d9713fe7a6a2d60593aa5634d116f7501eee4dc';
 
 export const api = axios.create({
   baseURL: 'https://gamechebservice-1.onrender.com',
