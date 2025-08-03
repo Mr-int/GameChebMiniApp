@@ -47,7 +47,21 @@ export async function getQuests() {
         api_token: API_TOKEN
       }
     });
-    return response.results || response; // Возвращаем results если есть пагинация
+    console.log('Полный ответ API:', response);
+    console.log('Тип ответа:', typeof response);
+    console.log('Ключи ответа:', Object.keys(response));
+    
+    // Проверяем структуру ответа
+    if (response && response.results) {
+      console.log('Найдены results:', response.results);
+      return response.results;
+    } else if (Array.isArray(response)) {
+      console.log('Ответ - массив:', response);
+      return response;
+    } else {
+      console.log('Неожиданная структура ответа:', response);
+      return [];
+    }
   } catch (error) {
     console.error('Ошибка запроса к /api/routes/:', error);
     // Для тестирования возвращаем мок данные
