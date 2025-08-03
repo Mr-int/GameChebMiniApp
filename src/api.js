@@ -3,7 +3,7 @@ import axios from 'axios';
 const API_TOKEN = '00d197fe99bd7b7eb8b46d385d9713fe7a6a2d60593aa5634d116f7501eee4dc';
 
 export const api = axios.create({
-  baseURL: 'http://gamecheb.tech/docs',
+  baseURL: '', // Используем относительный путь для прокси
   timeout: 10000, // 10 секунд timeout
   withCredentials: false,
 });
@@ -42,14 +42,14 @@ api.interceptors.response.use(
 
 export async function getQuests() {
   try {
-    const response = await api.get('/routes/', {
+    const response = await api.get('/docs/routes/', {
       params: {
         api_token: API_TOKEN
       }
     });
     return response.results || response; // Возвращаем results если есть пагинация
   } catch (error) {
-    console.error('Ошибка запроса к /routes/:', error);
+    console.error('Ошибка запроса к /docs/routes/:', error);
     // Для тестирования возвращаем мок данные
     if (error.message.includes('Mixed Content') || error.message.includes('ERR_CONNECTION_REFUSED')) {
       console.log('Возвращаем тестовые данные из-за ошибки подключения');
@@ -81,14 +81,14 @@ export async function getQuests() {
 
 export async function getRouteById(id) {
   try {
-    const response = await api.get(`/routes/${id}/`, {
+    const response = await api.get(`/docs/routes/${id}/`, {
       params: {
         api_token: API_TOKEN
       }
     });
     return response;
   } catch (error) {
-    console.error('Ошибка запроса к /routes/' + id + '/', error);
+    console.error('Ошибка запроса к /docs/routes/' + id + '/', error);
     throw error;
   }
 } 
