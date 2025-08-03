@@ -3,7 +3,7 @@ import axios from 'axios';
 const API_TOKEN = '00d197fe99bd7b7eb8b46d385d9713fe7a6a2d60593aa5634d116f7501eee4dc';
 
 export const api = axios.create({
-  baseURL: 'http://gamecheb.tech',
+  baseURL: '', // Используем относительный путь для прокси
   timeout: 10000, // 10 секунд timeout
   withCredentials: false,
 });
