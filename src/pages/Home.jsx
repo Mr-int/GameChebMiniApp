@@ -97,7 +97,15 @@ const Home = () => {
       setLoading(true);
       const data = await getQuests();
       console.log('Ответ сервера:', data);
-      setQuests(Array.isArray(data.results) ? data.results : []);
+      // Проверяем разные варианты структуры данных
+      if (Array.isArray(data.results)) {
+        setQuests(data.results);
+      } else if (Array.isArray(data)) {
+        setQuests(data);
+      } else {
+        console.log('Неожиданная структура данных:', data);
+        setQuests([]);
+      }
     } catch (err) {
       setError(err.message);
       setQuests([]);
