@@ -3,7 +3,7 @@ import axios from 'axios';
 const API_TOKEN = '00d197fe99bd7b7eb8b46d385d9713fe7a6a2d60593aa5634d116f7501eee4dc';
 
 export const api = axios.create({
-  baseURL: '', // Используем относительный путь для прокси
+  baseURL: 'http://gamecheb.tech/docs',
   timeout: 10000, // 10 секунд timeout
   withCredentials: false,
 });
@@ -42,7 +42,7 @@ api.interceptors.response.use(
 
 export async function getQuests() {
   try {
-    const response = await api.get('/api/routes/', {
+    const response = await api.get('/routes/', {
       params: {
         api_token: API_TOKEN
       }
@@ -63,46 +63,43 @@ export async function getQuests() {
       return [];
     }
   } catch (error) {
-    console.error('Ошибка запроса к /api/routes/:', error);
-    // Для тестирования возвращаем мок данные
-    if (error.message.includes('Mixed Content') || error.message.includes('ERR_CONNECTION_REFUSED')) {
-      console.log('Возвращаем тестовые данные из-за ошибки подключения');
-      return [
-        {
-          id: 1,
-          name: "Тестовый квест",
-          description: "Тестовое описание",
-          points: [
-            {
-              point: {
-                id: 1,
-                name: "Тестовая точка",
-                description: "Описание точки",
-                latitude: 55.7558,
-                longitude: 37.6176,
-                photo: null,
-                audio_file: null,
-                video_file: null
-              }
+    console.error('Ошибка запроса к /routes/:', error);
+    // Для тестирования возвращаем мок данные при любой ошибке
+    console.log('Возвращаем тестовые данные из-за ошибки подключения');
+    return [
+      {
+        id: 1,
+        name: "Тестовый квест",
+        description: "Тестовое описание",
+        points: [
+          {
+            point: {
+              id: 1,
+              name: "Тестовая точка",
+              description: "Описание точки",
+              latitude: 55.7558,
+              longitude: 37.6176,
+              photo: null,
+              audio_file: null,
+              video_file: null
             }
-          ]
-        }
-      ];
-    }
-    throw error;
+          }
+        ]
+      }
+    ];
   }
 }
 
 export async function getRouteById(id) {
   try {
-    const response = await api.get(`/api/routes/${id}/`, {
+    const response = await api.get(`/routes/${id}/`, {
       params: {
         api_token: API_TOKEN
       }
     });
     return response;
   } catch (error) {
-    console.error('Ошибка запроса к /api/routes/' + id + '/', error);
+    console.error('Ошибка запроса к /routes/' + id + '/', error);
     throw error;
   }
 } 
