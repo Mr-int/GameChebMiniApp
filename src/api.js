@@ -44,7 +44,8 @@ export async function getQuests() {
   try {
     const response = await api.get('/routes/', {
       params: {
-        api_token: API_TOKEN
+        api_token: API_TOKEN,
+        v: Date.now() // Добавляем версию для избежания кэширования
       }
     });
     console.log('Полный ответ API:', response);
