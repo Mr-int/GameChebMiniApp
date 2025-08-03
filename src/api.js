@@ -42,14 +42,14 @@ api.interceptors.response.use(
 
 export async function getQuests() {
   try {
-    const response = await api.get('/docs/routes/', {
+    const response = await api.get('/api/routes/', {
       params: {
         api_token: API_TOKEN
       }
     });
     return response.results || response; // Возвращаем results если есть пагинация
   } catch (error) {
-    console.error('Ошибка запроса к /docs/routes/:', error);
+    console.error('Ошибка запроса к /api/routes/:', error);
     // Для тестирования возвращаем мок данные
     if (error.message.includes('Mixed Content') || error.message.includes('ERR_CONNECTION_REFUSED')) {
       console.log('Возвращаем тестовые данные из-за ошибки подключения');
@@ -81,14 +81,14 @@ export async function getQuests() {
 
 export async function getRouteById(id) {
   try {
-    const response = await api.get(`/docs/routes/${id}/`, {
+    const response = await api.get(`/api/routes/${id}/`, {
       params: {
         api_token: API_TOKEN
       }
     });
     return response;
   } catch (error) {
-    console.error('Ошибка запроса к /docs/routes/' + id + '/', error);
+    console.error('Ошибка запроса к /api/routes/' + id + '/', error);
     throw error;
   }
 } 

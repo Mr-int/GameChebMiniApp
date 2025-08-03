@@ -3,8 +3,8 @@
   publish = "build" 
 
 [[redirects]]
-  from = "/docs/*"
-  to = "http://gamecheb.tech/docs/:splat"
+  from = "/api/*"
+  to = "http://gamecheb.tech/docs/api/:splat"
   status = 200
   force = true
   headers = {Access-Control-Allow-Origin = "*"} 
