@@ -65,29 +65,19 @@ export async function getQuests() {
     }
   } catch (error) {
     console.error('Ошибка запроса к /routes/:', error);
-    // Для тестирования возвращаем мок данные при любой ошибке
-    console.log('Возвращаем тестовые данные из-за ошибки подключения');
-    return [
-      {
-        id: 1,
-        name: "Тестовый квест",
-        description: "Тестовое описание",
-        points: [
-          {
-            point: {
-              id: 1,
-              name: "Тестовая точка",
-              description: "Описание точки",
-              latitude: 55.7558,
-              longitude: 37.6176,
-              photo: null,
-              audio_file: null,
-              video_file: null
-            }
-          }
-        ]
-      }
-    ];
+    console.error('Детали ошибки:', {
+      message: error.message,
+      code: error.code,
+      status: error.response?.status,
+      data: error.response?.data
+    });
+    
+    if (error.message.includes('Mixed Content')) {
+      console.error('ОШИБКА: Mixed Content - бэкенд должен поддерживать HTTPS');
+      throw new Error('Бэкенд должен поддерживать HTTPS для работы с HTTPS фронтендом');
+    }
+    
+    throw error;
   }
 }
 
