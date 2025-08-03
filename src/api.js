@@ -3,14 +3,21 @@ import axios from 'axios';
 const API_TOKEN = '00d197fe99bd7b7eb8b46d385d9713fe7a6a2d60593aa5634d116f7501eee4dc';
 
 export const api = axios.create({
-  baseURL: 'https://gamecheb.tech',
+  baseURL: 'http://gamecheb.tech',
   timeout: 10000, // 10 секунд timeout
+  withCredentials: false,
 });
 
 // Добавляем interceptor для логирования
 api.interceptors.request.use(
   (config) => {
     console.log('Отправляем запрос:', config.method?.toUpperCase(), config.url);
+    // Добавляем заголовки для CORS
+    config.headers = {
+      ...config.headers,
+      'Accept': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+    };
     return config;
   },
   (error) => {
