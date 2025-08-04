@@ -16,17 +16,8 @@ export const API_CONFIG = {
       return process.env.REACT_APP_API_BASE_URL;
     }
     
-    // Настройки по умолчанию
-    if (isDevelopment) {
-      return 'http://localhost:8000'; // Локальный бэкенд
-    }
-    
-    if (isProduction) {
-      return 'https://gamecheb-backend.onrender.com'; // Продакшн бэкенд
-    }
-    
-    // Fallback
-    return 'https://gamecheb-backend.onrender.com';
+    // Возвращаем пустую строку для относительных путей (как было изначально)
+    return '';
   })(),
   
   // Timeout для запросов
