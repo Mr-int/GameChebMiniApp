@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import StartQuestModal from '../components/StartQuestModal';
+import RouteEditor from '../components/RouteEditor';
 import { initTelegramWebApp } from '../utils/telegram';
 import { getQuests } from '../api';
+import { verifyPassword, checkSession, createSession, clearSession } from '../utils/auth';
 
 const HomeContainer = styled.div`
   background-color: white;
@@ -80,12 +82,40 @@ const QuestDescription = styled.p`
   line-height: 1.5;
 `;
 
+const EditButton = styled.button`
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 25px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  z-index: 1000;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
 const Home = () => {
   const navigate = useNavigate();
   const [selectedQuest, setSelectedQuest] = useState(null);
   const [quests, setQuests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showRouteEditor, setShowRouteEditor] = useState(false);
+  const [editingQuest, setEditingQuest] = useState(null);
 
 
 
@@ -140,6 +170,43 @@ const Home = () => {
     setSelectedQuest(null);
   };
 
+  const handleOpenRouteEditor = async () => {
+    // Проверяем сессию
+    if (checkSession()) {
+      setShowRouteEditor(true);
+      return;
+    }
+
+    // Запрашиваем пароль
+    const password = prompt('Введите пароль для редактирования маршрутов:');
+    if (password === null) return; // Пользователь отменил
+
+    try {
+      const isValid = await verifyPassword(password);
+      if (isValid) {
+        createSession();
+        setShowRouteEditor(true);
+      } else {
+        alert('❌ Неверный пароль!');
+      }
+    } catch (error) {
+      console.error('Ошибка проверки пароля:', error);
+      alert('❌ Ошибка проверки пароля!');
+    }
+  };
+
+  const handleCloseRouteEditor = () => {
+    setShowRouteEditor(false);
+    setEditingQuest(null);
+  };
+
+  const handleLogout = () => {
+    clearSession();
+    setShowRouteEditor(false);
+    setEditingQuest(null);
+    alert('✅ Вы вышли из режима редактирования');
+  };
+
   if (loading) {
     return (
       <HomeContainer>
@@ -158,6 +225,9 @@ const Home = () => {
 
   return (
     <HomeContainer>
+      <EditButton onClick={checkSession() ? handleLogout : handleOpenRouteEditor}>
+        {checkSession() ? '🚪 Выйти из редактора' : '🗺️ Редактировать маршруты'}
+      </EditButton>
       <WelcomeText>Приветствуем вас</WelcomeText>
       <Divider />
       <GameChebText>GameCheb</GameChebText>
@@ -191,6 +261,13 @@ const Home = () => {
           questTitle={selectedQuest.title}
           onClose={handleCloseModal}
           onConfirm={handleStartQuest}
+        />
+      )}
+
+      {showRouteEditor && (
+        <RouteEditor
+          quests={quests}
+          onClose={handleCloseRouteEditor}
         />
       )}
     </HomeContainer>

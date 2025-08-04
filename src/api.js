@@ -95,4 +95,25 @@ export async function getRouteById(id) {
     console.error('Ошибка запроса к /docs/routes/' + id, error);
     throw error;
   }
+}
+
+export async function updateRoute(routeId, updatedData) {
+  try {
+    console.log('Отправляем обновление маршрута:', routeId, updatedData);
+    
+    const response = await api.put(`/docs/routes/${routeId}`, updatedData, {
+      params: {
+        api_token: API_TOKEN
+      },
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    console.log('Маршрут успешно обновлен:', response);
+    return response;
+  } catch (error) {
+    console.error('Ошибка обновления маршрута:', error);
+    throw error;
+  }
 } 
