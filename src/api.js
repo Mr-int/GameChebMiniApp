@@ -3,7 +3,7 @@ import axios from 'axios';
 const API_TOKEN = '00d197fe99bd7b7eb8b46d385d9713fe7a6a2d60593aa5634d116f7501eee4dc';
 
 export const api = axios.create({
-  baseURL: '', // Используем относительный путь для прокси
+  baseURL: 'https://gamecheb-backend.onrender.com', // URL вашего бэкенда
   timeout: 10000, // 10 секунд timeout
   withCredentials: false,
 });
@@ -51,6 +51,13 @@ export async function getQuests() {
     console.log('Полный ответ API:', response);
     console.log('Тип ответа:', typeof response);
     console.log('Ключи ответа:', Object.keys(response));
+    
+    // Проверяем, что ответ не HTML
+    if (typeof response === 'string' && response.includes('<!doctype html>')) {
+      console.error('Получен HTML вместо JSON - неправильный URL API');
+      console.error('Текущий baseURL:', api.defaults.baseURL);
+      throw new Error('Неправильный URL API - получен HTML ответ');
+    }
     
     // Проверяем структуру ответа
     if (response && response.results) {
