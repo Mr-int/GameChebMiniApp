@@ -24,9 +24,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "prebuild": "npm ci --legacy-peer-deps",
-    "dev": "react-scripts start",
-    "generate-password": "node generate-password-hash.js"
+    "prebuild": "npm ci --legacy-peer-deps"
   },
   "eslintConfig": {
     "extends": [

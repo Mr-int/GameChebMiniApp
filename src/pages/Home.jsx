@@ -10,7 +10,6 @@ const HomeContainer = styled.div`
   min-height: 100vh;
   padding: 16px;
   font-family: 'Roboto', sans-serif;
-  position: relative;
 `;
 
 const WelcomeText = styled.h1`
@@ -81,27 +80,6 @@ const QuestDescription = styled.p`
   line-height: 1.5;
 `;
 
-const AdminButton = styled.button`
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  background: #333;
-  color: white;
-  border: none;
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  z-index: 1000;
-
-  &:hover {
-    background: #555;
-    transform: translateY(-2px);
-  }
-`;
-
 const Home = () => {
   const navigate = useNavigate();
   const [selectedQuest, setSelectedQuest] = useState(null);
@@ -109,9 +87,7 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const handleAdminClick = () => {
-    navigate('/admin');
-  };
+
 
   useEffect(() => {
     initTelegramWebApp();
@@ -123,63 +99,18 @@ const Home = () => {
       setLoading(true);
       const data = await getQuests();
       console.log('Ответ сервера:', data);
-      console.log('Тип данных:', typeof data);
-      console.log('Ключи данных:', data ? Object.keys(data) : 'null');
-      
       // Проверяем разные варианты структуры данных
-      if (data && Array.isArray(data.results)) {
-        console.log('Найдены results:', data.results);
+      if (Array.isArray(data.results)) {
         setQuests(data.results);
       } else if (Array.isArray(data)) {
-        console.log('Данные - массив:', data);
         setQuests(data);
-      } else if (data && data.data && Array.isArray(data.data)) {
-        console.log('Найдены data:', data.data);
-        setQuests(data.data);
       } else {
         console.log('Неожиданная структура данных:', data);
-        // Всегда показываем тестовые данные если API не работает
-        const testQuests = [
-          {
-            id: 1,
-            name: 'Тестовый квест 1',
-            title: 'Тестовый квест 1',
-            description: 'Описание тестового квеста 1',
-            coordinates: '[{"lat": 55.7558, "lng": 37.6176, "name": "Точка 1"}, {"lat": 55.7517, "lng": 37.6178, "name": "Точка 2"}]'
-          },
-          {
-            id: 2,
-            name: 'Тестовый квест 2',
-            title: 'Тестовый квест 2',
-            description: 'Описание тестового квеста 2',
-            coordinates: '[{"lat": 55.7539, "lng": 37.6208, "name": "Точка 1"}, {"lat": 55.7549, "lng": 37.6218, "name": "Точка 2"}]'
-          }
-        ];
-        console.log('Используем тестовые данные:', testQuests);
-        setQuests(testQuests);
+        setQuests([]);
       }
     } catch (err) {
-      console.error('Ошибка загрузки квестов:', err);
-      // Всегда показываем тестовые данные при ошибке
-      const testQuests = [
-        {
-          id: 1,
-          name: 'Тестовый квест 1',
-          title: 'Тестовый квест 1',
-          description: 'Описание тестового квеста 1',
-          coordinates: '[{"lat": 55.7558, "lng": 37.6176, "name": "Точка 1"}, {"lat": 55.7517, "lng": 37.6178, "name": "Точка 2"}]'
-        },
-        {
-          id: 2,
-          name: 'Тестовый квест 2',
-          title: 'Тестовый квест 2',
-          description: 'Описание тестового квеста 2',
-          coordinates: '[{"lat": 55.7539, "lng": 37.6208, "name": "Точка 1"}, {"lat": 55.7549, "lng": 37.6218, "name": "Точка 2"}]'
-        }
-      ];
-      console.log('Используем тестовые данные при ошибке:', testQuests);
-      setQuests(testQuests);
-      setError(null); // Убираем ошибку, так как используем тестовые данные
+      setError(err.message);
+      setQuests([]);
     } finally {
       setLoading(false);
     }
@@ -222,9 +153,6 @@ const Home = () => {
 
   return (
     <HomeContainer>
-      <AdminButton onClick={handleAdminClick}>
-        🗺️ Редактировать маршруты
-      </AdminButton>
       <WelcomeText>Приветствуем вас</WelcomeText>
       <Divider />
       <GameChebText>GameCheb</GameChebText>
@@ -233,10 +161,10 @@ const Home = () => {
           <QuestCard key={quest.id} onClick={() => handleQuestClick(quest)}>
             <QuestImage 
               src={'/forest.jpg'}
-              alt={quest.name || quest.title} 
+              alt={quest.name} 
             />
             <QuestContent>
-              <QuestTitle>{quest.name || quest.title}</QuestTitle>
+              <QuestTitle>{quest.name}</QuestTitle>
               <QuestDescription>{quest.description}</QuestDescription>
             </QuestContent>
           </QuestCard>
@@ -245,7 +173,7 @@ const Home = () => {
 
       {selectedQuest && (
         <StartQuestModal
-          questTitle={selectedQuest.name || selectedQuest.title}
+          questTitle={selectedQuest.title}
           onClose={handleCloseModal}
           onConfirm={handleStartQuest}
         />
