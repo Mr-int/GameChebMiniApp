@@ -606,12 +606,12 @@ const Quest = () => {
       <PointsList>
         {quest.points.map(({ point }, index) => (
           openedPoints.includes(index) ? (
-            <PointCard key={point.id} onClick={() => handlePointClick(point)}>
-              <PointImage 
-                src={point.photo ? point.photo : ''}
-                alt={point.name}
-              />
-              <PointInfo>
+          <PointCard key={point.id} onClick={() => handlePointClick(point)}>
+            <PointImage 
+              src={point.photo ? point.photo : ''}
+              alt={point.name}
+            />
+            <PointInfo>
                 <PointTitle>
                   {point.name}
                   {index === currentPointIndex && index !== quest.points.length - 1 && (
@@ -624,14 +624,14 @@ const Quest = () => {
                     </StyledManualOpenButton>
                   )}
                 </PointTitle>
-                {point.audio_file && (
+              {point.audio_file && (
                   <audio controls style={{ width: '100%', marginTop: 8 }} src={point.audio_file} />
-                )}
-              </PointInfo>
-              <PointStatus $visited={visitedPoints.has(point.id)}>
-                {visitedPoints.has(point.id) ? '✓' : index + 1}
-              </PointStatus>
-            </PointCard>
+              )}
+            </PointInfo>
+            <PointStatus $visited={visitedPoints.has(point.id)}>
+              {visitedPoints.has(point.id) ? '✓' : index + 1}
+            </PointStatus>
+          </PointCard>
           ) : null
         ))}
       </PointsList>

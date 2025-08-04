@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { createGlobalStyle } from 'styled-components';
 import Home from './pages/Home';
 import Quest from './pages/Quest';
+import AdminPanel from './pages/AdminPanel';
 
 const GlobalStyle = createGlobalStyle`
   @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
@@ -32,6 +33,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/quest/:id" element={<Quest />} />
+        <Route path="/admin" element={<AdminPanel />} />
       </Routes>
     </Router>
   );

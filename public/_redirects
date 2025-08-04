@@ -1,0 +1,4 @@
+# Редиректы для Single Page Application
+# Все маршруты перенаправляются на index.html
+
+/*    /index.html   200 

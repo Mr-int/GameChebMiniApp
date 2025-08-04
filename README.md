@@ -1,70 +1,133 @@
-# Getting Started with Create React App
+# GameCheb Mini App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Интерактивное приложение для квестов с картой и маршрутами.
 
-## Available Scripts
+## 🚀 Возможности
 
-In the project directory, you can run:
+- **Квесты**: Создание и управление интерактивными квестами
+- **Карта**: Визуализация маршрутов на интерактивной карте
+- **Панель администратора**: Защищенная панель для управления квестами
+- **Редактор маршрутов**: Визуальный редактор для создания и редактирования маршрутов
 
-### `npm start`
+## 🔐 Безопасность
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+Панель администратора защищена паролем. Пароль по умолчанию: `GameCheb2024!`
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+**Важно**: Измените пароль в файле `src/utils/auth.js` перед развертыванием!
 
-### `npm test`
+## 🛠️ Технологии
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- React 18
+- Styled Components
+- React Router
+- Canvas API для редактора карт
+- Web Crypto API для хеширования паролей
 
-### `npm run build`
+## 📦 Установка и запуск
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Локальная разработка
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```bash
+# Установка зависимостей
+npm install
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+# Запуск в режиме разработки
+npm run dev
 
-### `npm run eject`
+# Сборка для продакшена
+npm run build
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### Развертывание
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+1. **Netlify** (рекомендуется):
+   - Подключите репозиторий к Netlify
+   - Настройте переменные окружения если необходимо
+   - Автоматическое развертывание при пуше в main
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+2. **Vercel**:
+   - Подключите репозиторий к Vercel
+   - Настройте build command: `npm run build`
+   - Настройте output directory: `dist`
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+3. **Другие платформы**:
+   - Выполните `npm run build`
+   - Загрузите содержимое папки `dist`
 
-## Learn More
+## 🗺️ Структура проекта
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```
+src/
+├── components/          # React компоненты
+│   ├── LoginModal.jsx   # Модальное окно входа
+│   ├── MapEditor.jsx    # Редактор карт
+│   └── ...
+├── pages/              # Страницы приложения
+│   ├── Home.jsx        # Главная страница
+│   ├── Quest.jsx       # Страница квеста
+│   └── AdminPanel.jsx  # Панель администратора
+├── utils/              # Утилиты
+│   ├── auth.js         # Аутентификация
+│   └── telegram.js     # Telegram Web App
+└── api.js              # API функции
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## 🔧 Конфигурация
 
-### Code Splitting
+### API настройки
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+В файле `src/api.js` настройте:
+- `API_TOKEN` - токен для доступа к API
+- `baseURL` - базовый URL вашего API
 
-### Analyzing the Bundle Size
+### Пароль администратора
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+Для изменения пароля администратора:
 
-### Making a Progressive Web App
+1. Откройте `src/utils/auth.js`
+2. Найдите строку с `HASHED_PASSWORD`
+3. Сгенерируйте новый хеш для вашего пароля
+4. Замените значение
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## 📱 Использование
 
-### Advanced Configuration
+### Для пользователей
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+1. Откройте приложение
+2. Выберите квест из списка
+3. Следуйте маршруту на карте
+4. Выполняйте задания в каждой точке
 
-### Deployment
+### Для администраторов
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+1. Нажмите кнопку "👨‍💻 Панель управления" в правом верхнем углу
+2. Введите пароль администратора
+3. Управляйте квестами:
+   - Создавайте новые квесты
+   - Редактируйте существующие
+   - Настраивайте маршруты через визуальный редактор
+   - Удаляйте ненужные квесты
 
-### `npm run build` fails to minify
+## 🎨 Редактор маршрутов
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Визуальный редактор позволяет:
+- Добавлять точки на карту кликом
+- Перетаскивать существующие точки
+- Удалять точки
+- Просматривать список всех точек
+- Экспортировать координаты в JSON формате
+
+## 🔒 Безопасность
+
+- Пароли хешируются с использованием SHA-256
+- Сессии истекают через 2 часа
+- Используется sessionStorage для хранения состояния аутентификации
+- Защита от просмотра пароля в DevTools
+
+## 📄 Лицензия
+
+MIT License
+
+## 🤝 Поддержка
+
+При возникновении проблем создайте issue в репозитории или обратитесь к разработчикам.

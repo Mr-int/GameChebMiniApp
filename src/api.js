@@ -3,7 +3,7 @@ import axios from 'axios';
 const API_TOKEN = '00d197fe99bd7b7eb8b46d385d9713fe7a6a2d60593aa5634d116f7501eee4dc';
 
 export const api = axios.create({
-  baseURL: 'https://gamecheb.tech/docs',
+  baseURL: '', // Используем относительный путь для прокси
   timeout: 10000, // 10 секунд timeout
   withCredentials: false,
 });
@@ -42,7 +42,7 @@ api.interceptors.response.use(
 
 export async function getQuests() {
   try {
-    const response = await api.get('/routes/', {
+    const response = await api.get('/api/routes/', {
       params: {
         api_token: API_TOKEN,
         v: Date.now() // Добавляем версию для избежания кэширования
@@ -64,7 +64,7 @@ export async function getQuests() {
       return [];
     }
   } catch (error) {
-    console.error('Ошибка запроса к /routes/:', error);
+    console.error('Ошибка запроса к /api/routes/:', error);
     console.error('Детали ошибки:', {
       message: error.message,
       code: error.code,
@@ -83,14 +83,55 @@ export async function getQuests() {
 
 export async function getRouteById(id) {
   try {
-    const response = await api.get(`/routes/${id}/`, {
+    const response = await api.get(`/api/routes/${id}/`, {
       params: {
         api_token: API_TOKEN
       }
     });
     return response;
   } catch (error) {
-    console.error('Ошибка запроса к /routes/' + id + '/', error);
+    console.error('Ошибка запроса к /api/routes/' + id + '/', error);
+    throw error;
+  }
+}
+
+// Функции для административной панели
+export async function createQuest(questData) {
+  try {
+    const response = await api.post('/api/routes/', {
+      ...questData,
+      api_token: API_TOKEN
+    });
+    return response;
+  } catch (error) {
+    console.error('Ошибка создания квеста:', error);
+    throw error;
+  }
+}
+
+export async function updateQuest(questId, questData) {
+  try {
+    const response = await api.put(`/api/routes/${questId}/`, {
+      ...questData,
+      api_token: API_TOKEN
+    });
+    return response;
+  } catch (error) {
+    console.error('Ошибка обновления квеста:', error);
+    throw error;
+  }
+}
+
+export async function deleteQuest(questId) {
+  try {
+    const response = await api.delete(`/api/routes/${questId}/`, {
+      params: {
+        api_token: API_TOKEN
+      }
+    });
+    return response;
+  } catch (error) {
+    console.error('Ошибка удаления квеста:', error);
     throw error;
   }
 } 

@@ -10,6 +10,7 @@ const HomeContainer = styled.div`
   min-height: 100vh;
   padding: 16px;
   font-family: 'Roboto', sans-serif;
+  position: relative;
 `;
 
 const WelcomeText = styled.h1`
@@ -80,12 +81,37 @@ const QuestDescription = styled.p`
   line-height: 1.5;
 `;
 
+const AdminButton = styled.button`
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #333;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  z-index: 1000;
+
+  &:hover {
+    background: #555;
+    transform: translateY(-2px);
+  }
+`;
+
 const Home = () => {
   const navigate = useNavigate();
   const [selectedQuest, setSelectedQuest] = useState(null);
   const [quests, setQuests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const handleAdminClick = () => {
+    navigate('/admin');
+  };
 
   useEffect(() => {
     initTelegramWebApp();
@@ -151,6 +177,9 @@ const Home = () => {
 
   return (
     <HomeContainer>
+      <AdminButton onClick={handleAdminClick}>
+        👨‍💻 Панель управления
+      </AdminButton>
       <WelcomeText>Приветствуем вас</WelcomeText>
       <Divider />
       <GameChebText>GameCheb</GameChebText>
