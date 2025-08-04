@@ -268,6 +268,7 @@ const Home = () => {
         <RouteEditor
           quests={quests}
           onClose={handleCloseRouteEditor}
+          onLogout={handleLogout}
         />
       )}
     </HomeContainer>

@@ -198,7 +198,7 @@ const Button = styled.button`
   }
 `;
 
-const RouteEditor = ({ quests, onClose }) => {
+const RouteEditor = ({ quests, onClose, onLogout }) => {
   const [selectedQuestId, setSelectedQuestId] = useState('');
   const [selectedQuest, setSelectedQuest] = useState(null);
   const [editingPoints, setEditingPoints] = useState([]);
@@ -262,7 +262,24 @@ const RouteEditor = ({ quests, onClose }) => {
       <EditorModal onClick={(e) => e.stopPropagation()}>
         <EditorHeader>
           <EditorTitle>Редактор маршрутов</EditorTitle>
-          <CloseButton onClick={onClose}>×</CloseButton>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <button
+              onClick={onLogout}
+              style={{
+                background: '#dc3545',
+                color: 'white',
+                border: 'none',
+                padding: '8px 16px',
+                borderRadius: '6px',
+                fontSize: '14px',
+                cursor: 'pointer',
+                fontWeight: '500'
+              }}
+            >
+              🚪 Выйти
+            </button>
+            <CloseButton onClick={onClose}>×</CloseButton>
+          </div>
         </EditorHeader>
 
         <QuestSelector>
@@ -347,6 +364,12 @@ const RouteEditor = ({ quests, onClose }) => {
               </Button>
               <Button className="secondary" onClick={onClose}>
                 ❌ Отмена
+              </Button>
+              <Button 
+                className="danger" 
+                onClick={onLogout}
+              >
+                🚪 Выйти из редактора
               </Button>
             </ActionButtons>
           </>
