@@ -293,19 +293,49 @@ const RouteEditor = ({ quests, onClose }) => {
               questName={selectedQuest.name}
             />
 
-            <PointsList>
-              {editingPoints.map((pointData, index) => (
-                <PointItem key={pointData.point.id} onClick={() => handleEditPoint(pointData.point)}>
-                  <PointOrder>{pointData.order}</PointOrder>
-                  <PointInfo>
-                    <PointName>{pointData.point.name}</PointName>
-                    <PointCoords>
-                      {pointData.point.latitude.toFixed(6)}, {pointData.point.longitude.toFixed(6)}
-                    </PointCoords>
-                  </PointInfo>
-                </PointItem>
-              ))}
-            </PointsList>
+            <div style={{ 
+              background: '#f8f9fa', 
+              padding: '15px', 
+              borderRadius: '8px', 
+              marginBottom: '20px' 
+            }}>
+              <h4 style={{ margin: '0 0 10px 0', color: '#333' }}>📋 Список точек маршрута:</h4>
+              <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                {editingPoints.map((pointData, index) => (
+                  <div key={pointData.point.id} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '8px',
+                    borderBottom: index < editingPoints.length - 1 ? '1px solid #e0e0e0' : 'none',
+                    backgroundColor: index === 0 ? '#d4edda' : index === editingPoints.length - 1 ? '#f8d7da' : '#fff'
+                  }}>
+                    <div style={{
+                      background: index === 0 ? '#28a745' : index === editingPoints.length - 1 ? '#dc3545' : '#667eea',
+                      color: 'white',
+                      width: '24px',
+                      height: '24px',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      marginRight: '12px'
+                    }}>
+                      {pointData.order}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: '500', color: '#333', marginBottom: '4px' }}>
+                        {pointData.point.name}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>
+                        {pointData.point.latitude.toFixed(6)}, {pointData.point.longitude.toFixed(6)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
 
             <ActionButtons>
               <Button 

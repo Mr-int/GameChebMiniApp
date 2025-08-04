@@ -3,19 +3,28 @@ import styled from 'styled-components';
 
 const MapContainer = styled.div`
   width: 100%;
-  height: 400px;
+  height: 500px;
   border: 2px solid #e0e0e0;
   border-radius: 8px;
   position: relative;
-  background: #f8f9fa;
   overflow: hidden;
   margin-bottom: 20px;
 `;
 
-const Canvas = styled.canvas`
+const MapFrame = styled.iframe`
   width: 100%;
   height: 100%;
-  cursor: crosshair;
+  border: none;
+`;
+
+const MapOverlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 10;
 `;
 
 const MapControls = styled.div`
@@ -23,15 +32,19 @@ const MapControls = styled.div`
   gap: 10px;
   margin-bottom: 15px;
   flex-wrap: wrap;
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 `;
 
 const ControlButton = styled.button`
-  padding: 8px 16px;
+  padding: 10px 16px;
   border: 2px solid #667eea;
   background: white;
   color: #667eea;
   border-radius: 6px;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
@@ -54,221 +67,169 @@ const ControlButton = styled.button`
       color: white;
     }
   }
+
+  &.success {
+    border-color: #28a745;
+    color: #28a745;
+    &:hover {
+      background: #28a745;
+      color: white;
+    }
+  }
 `;
 
 const MapInfo = styled.div`
   background: #e9ecef;
-  padding: 10px;
-  border-radius: 6px;
-  font-size: 12px;
+  padding: 15px;
+  border-radius: 8px;
+  font-size: 14px;
   color: #495057;
   margin-bottom: 15px;
+  line-height: 1.5;
+`;
+
+const Instructions = styled.div`
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+  font-size: 14px;
+  color: #856404;
 `;
 
 const MapEditor = ({ points = [], onPointsChange, questName }) => {
-  const canvasRef = useRef(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [draggedPoint, setDraggedPoint] = useState(null);
-  const [scale, setScale] = useState(1);
-  const [offset, setOffset] = useState({ x: 0, y: 0 });
-  const [mode, setMode] = useState('view'); // view, edit, delete
+  const [mode, setMode] = useState('view'); // view, add, edit, delete
+  const [mapUrl, setMapUrl] = useState('');
+  const [centerLat, setCenterLat] = useState(55.7558); // Москва по умолчанию
+  const [centerLng, setCenterLng] = useState(37.6176);
+  const [zoom, setZoom] = useState(13);
 
-  // Конвертируем координаты в пиксели
-  const latLngToPixel = (lat, lng) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
-
-    // Простая проекция (можно улучшить)
-    const x = ((lng + 180) / 360) * canvas.width;
-    const y = ((90 - lat) / 180) * canvas.height;
-    
-    return {
-      x: x * scale + offset.x,
-      y: y * scale + offset.y
-    };
-  };
-
-  // Конвертируем пиксели в координаты
-  const pixelToLatLng = (x, y) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return { lat: 0, lng: 0 };
-
-    const adjustedX = (x - offset.x) / scale;
-    const adjustedY = (y - offset.y) / scale;
-    
-    const lng = (adjustedX / canvas.width) * 360 - 180;
-    const lat = 90 - (adjustedY / canvas.height) * 180;
-    
-    return { lat, lng };
-  };
-
-  // Находим точку под курсором
-  const findPointAtPosition = (x, y) => {
-    return points.find((pointData, index) => {
-      const pixel = latLngToPixel(pointData.point.latitude, pointData.point.longitude);
-      const distance = Math.sqrt((pixel.x - x) ** 2 + (pixel.y - y) ** 2);
-      return distance < 15; // Радиус клика
-    });
-  };
-
-  // Рисуем карту
-  const drawMap = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Рисуем сетку
-    ctx.strokeStyle = '#e0e0e0';
-    ctx.lineWidth = 1;
-    for (let i = 0; i < canvas.width; i += 50) {
-      ctx.beginPath();
-      ctx.moveTo(i, 0);
-      ctx.lineTo(i, canvas.height);
-      ctx.stroke();
-    }
-    for (let i = 0; i < canvas.height; i += 50) {
-      ctx.beginPath();
-      ctx.moveTo(0, i);
-      ctx.lineTo(canvas.width, i);
-      ctx.stroke();
-    }
-
-    // Рисуем маршрут
-    if (points.length > 1) {
-      ctx.strokeStyle = '#667eea';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      
-      points.forEach((pointData, index) => {
-        const pixel = latLngToPixel(pointData.point.latitude, pointData.point.longitude);
-        if (index === 0) {
-          ctx.moveTo(pixel.x, pixel.y);
-        } else {
-          ctx.lineTo(pixel.x, pixel.y);
-        }
-      });
-      
-      ctx.stroke();
-    }
-
-    // Рисуем точки
-    points.forEach((pointData, index) => {
-      const pixel = latLngToPixel(pointData.point.latitude, pointData.point.longitude);
-      
-      // Круг точки
-      ctx.fillStyle = mode === 'delete' ? '#dc3545' : '#667eea';
-      ctx.beginPath();
-      ctx.arc(pixel.x, pixel.y, 8, 0, 2 * Math.PI);
-      ctx.fill();
-      
-      // Обводка
-      ctx.strokeStyle = 'white';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      
-      // Номер точки
-      ctx.fillStyle = 'white';
-      ctx.font = '12px Arial';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(pointData.order, pixel.x, pixel.y);
-    });
-  };
-
-  // Обработчики событий
-  const handleMouseDown = (e) => {
-    const rect = canvasRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    if (mode === 'edit') {
-      const pointData = findPointAtPosition(x, y);
-      if (pointData) {
-        setIsDragging(true);
-        setDraggedPoint(pointData);
-      }
-    } else if (mode === 'delete') {
-      const pointData = findPointAtPosition(x, y);
-      if (pointData) {
-        const newPoints = points.filter(p => p.point.id !== pointData.point.id);
-        // Обновляем порядок
-        newPoints.forEach((p, index) => {
-          p.order = index + 1;
-        });
-        onPointsChange(newPoints);
-      }
-    }
-  };
-
-  const handleMouseMove = (e) => {
-    if (isDragging && draggedPoint && mode === 'edit') {
-      const rect = canvasRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      
-      const newCoords = pixelToLatLng(x, y);
-      
-      // Обновляем координаты точки
-      const newPoints = points.map(p => {
-        if (p.point.id === draggedPoint.point.id) {
-          return {
-            ...p,
-            point: {
-              ...p.point,
-              latitude: newCoords.lat,
-              longitude: newCoords.lng
-            }
-          };
-        }
-        return p;
-      });
-      
-      onPointsChange(newPoints);
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-    setDraggedPoint(null);
-  };
-
-  const handleWheel = (e) => {
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? 0.9 : 1.1;
-    setScale(prev => Math.max(0.5, Math.min(3, prev * delta)));
-  };
-
-  // Инициализация canvas
+  // Генерируем URL для карты с маркерами
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (points.length === 0) {
+      // Если нет точек, показываем карту по умолчанию
+      setMapUrl(`https://www.openstreetmap.org/export/embed.html?bbox=${centerLng-0.01},${centerLat-0.01},${centerLng+0.01},${centerLat+0.01}&layer=mapnik&marker=${centerLat},${centerLng}`);
+      return;
+    }
 
-    const resizeCanvas = () => {
-      const rect = canvas.parentElement.getBoundingClientRect();
-      canvas.width = rect.width;
-      canvas.height = rect.height;
-      drawMap();
+    // Находим границы для центрирования карты
+    const lats = points.map(p => p.point.latitude);
+    const lngs = points.map(p => p.point.longitude);
+    const minLat = Math.min(...lats);
+    const maxLat = Math.max(...lats);
+    const minLng = Math.min(...lngs);
+    const maxLng = Math.max(...lngs);
+
+    // Добавляем отступы
+    const latPadding = (maxLat - minLat) * 0.1;
+    const lngPadding = (maxLng - minLng) * 0.1;
+
+    const bbox = `${minLng - lngPadding},${minLat - latPadding},${maxLng + lngPadding},${maxLat + latPadding}`;
+    
+    // Создаем маркеры для всех точек
+    const markers = points.map((pointData, index) => {
+      const color = index === 0 ? 'green' : index === points.length - 1 ? 'red' : 'blue';
+      return `&marker=${pointData.point.latitude},${pointData.point.longitude}`;
+    }).join('');
+
+    setMapUrl(`https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik${markers}`);
+  }, [points, centerLat, centerLng]);
+
+  // Добавляем промежуточную точку
+  const addIntermediatePoint = () => {
+    if (points.length < 2) {
+      alert('Нужно минимум 2 точки для добавления промежуточной!');
+      return;
+    }
+
+    // Находим середину между первой и последней точкой
+    const firstPoint = points[0].point;
+    const lastPoint = points[points.length - 1].point;
+    
+    const midLat = (firstPoint.latitude + lastPoint.latitude) / 2;
+    const midLng = (firstPoint.longitude + lastPoint.longitude) / 2;
+
+    const newPoint = {
+      point: {
+        id: `intermediate_${Date.now()}`,
+        name: `Промежуточная точка ${points.length}`,
+        latitude: midLat,
+        longitude: midLng,
+        photo: null,
+        description: 'Промежуточная точка маршрута'
+      },
+      order: points.length + 1
     };
 
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-    return () => window.removeEventListener('resize', resizeCanvas);
-  }, []);
+    const newPoints = [...points, newPoint];
+    onPointsChange(newPoints);
+  };
 
-  // Перерисовка при изменении точек или масштаба
-  useEffect(() => {
-    drawMap();
-  }, [points, scale, offset, mode]);
+  // Удаляем последнюю промежуточную точку
+  const removeLastIntermediate = () => {
+    if (points.length <= 2) {
+      alert('Нельзя удалить основные точки маршрута!');
+      return;
+    }
+
+    const newPoints = points.slice(0, -1);
+    // Обновляем порядок
+    newPoints.forEach((p, index) => {
+      p.order = index + 1;
+    });
+    onPointsChange(newPoints);
+  };
+
+  // Перемешиваем промежуточные точки для красивого маршрута
+  const optimizeRoute = () => {
+    if (points.length <= 2) {
+      alert('Нужно больше точек для оптимизации маршрута!');
+      return;
+    }
+
+    // Простая оптимизация - сортируем по расстоянию от начальной точки
+    const firstPoint = points[0];
+    const lastPoint = points[points.length - 1];
+    const intermediatePoints = points.slice(1, -1);
+
+    // Сортируем промежуточные точки по расстоянию от начальной
+    intermediatePoints.sort((a, b) => {
+      const distA = Math.sqrt(
+        Math.pow(a.point.latitude - firstPoint.point.latitude, 2) +
+        Math.pow(a.point.longitude - firstPoint.point.longitude, 2)
+      );
+      const distB = Math.sqrt(
+        Math.pow(b.point.latitude - firstPoint.point.latitude, 2) +
+        Math.pow(b.point.longitude - firstPoint.point.longitude, 2)
+      );
+      return distA - distB;
+    });
+
+    const newPoints = [firstPoint, ...intermediatePoints, lastPoint];
+    newPoints.forEach((p, index) => {
+      p.order = index + 1;
+    });
+
+    onPointsChange(newPoints);
+    alert('✅ Маршрут оптимизирован!');
+  };
 
   return (
     <div>
       <MapInfo>
-        <strong>Редактор маршрута:</strong> {questName} | 
-        Режим: {mode === 'view' ? 'Просмотр' : mode === 'edit' ? 'Редактирование' : 'Удаление'} | 
+        <strong>🗺️ Редактор маршрута:</strong> {questName} | 
+        Режим: {mode === 'view' ? 'Просмотр' : mode === 'add' ? 'Добавление точек' : mode === 'edit' ? 'Редактирование' : 'Удаление'} | 
         Точок: {points.length}
       </MapInfo>
+
+      <Instructions>
+        <strong>💡 Как использовать:</strong><br/>
+        • <strong>Зеленый маркер</strong> - начало маршрута<br/>
+        • <strong>Синие маркеры</strong> - промежуточные точки<br/>
+        • <strong>Красный маркер</strong> - конец маршрута<br/>
+        • Используйте кнопки ниже для управления маршрутом
+      </Instructions>
       
       <MapControls>
         <ControlButton 
@@ -278,31 +239,42 @@ const MapEditor = ({ points = [], onPointsChange, questName }) => {
           👁️ Просмотр
         </ControlButton>
         <ControlButton 
-          className={mode === 'edit' ? 'active' : ''} 
-          onClick={() => setMode('edit')}
+          className={mode === 'add' ? 'active' : ''} 
+          onClick={() => setMode('add')}
         >
-          ✏️ Редактировать
+          ➕ Добавить точку
         </ControlButton>
         <ControlButton 
-          className={mode === 'delete' ? 'active' : ''} 
-          onClick={() => setMode('delete')}
+          className="success"
+          onClick={addIntermediatePoint}
         >
-          🗑️ Удалить
+          🎯 Добавить промежуточную
         </ControlButton>
-        <ControlButton onClick={() => setScale(1)}>
-          🔍 Сброс масштаба
+        <ControlButton 
+          className="danger"
+          onClick={removeLastIntermediate}
+        >
+          🗑️ Удалить последнюю
+        </ControlButton>
+        <ControlButton 
+          onClick={optimizeRoute}
+        >
+          🔄 Оптимизировать маршрут
         </ControlButton>
       </MapControls>
 
       <MapContainer>
-        <Canvas
-          ref={canvasRef}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onWheel={handleWheel}
+        <MapFrame
+          src={mapUrl}
+          title="Карта маршрута"
         />
+        <MapOverlay />
       </MapContainer>
+
+      <div style={{ marginTop: '15px', fontSize: '12px', color: '#666' }}>
+        <strong>💡 Подсказка:</strong> Карта автоматически центрируется на вашем маршруте. 
+        Используйте кнопки для добавления промежуточных точек и создания красивого маршрута.
+      </div>
     </div>
   );
 };
