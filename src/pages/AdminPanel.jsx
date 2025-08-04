@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { getQuests, updateQuest, createQuest, deleteQuest } from '../api';
+import { getQuests, updateQuest } from '../api';
 import MapEditor from '../components/MapEditor';
 import LoginModal from '../components/LoginModal';
 import { isAuthenticated, logout } from '../utils/auth';
@@ -29,20 +29,10 @@ const Title = styled.h1`
   margin: 0;
 `;
 
-const AddButton = styled.button`
-  background: #4CAF50;
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
+const Subtitle = styled.p`
   font-size: 16px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s;
-
-  &:hover {
-    background: #45a049;
-  }
+  color: #666;
+  margin: 10px 0 0 0;
 `;
 
 const BackButton = styled.button`
@@ -130,12 +120,6 @@ const ActionButton = styled.button`
     background: #2196F3;
     color: white;
     &:hover { background: #1976D2; }
-  }
-
-  &.delete {
-    background: #f44336;
-    color: white;
-    &:hover { background: #d32f2f; }
   }
 
   &.view {
@@ -293,9 +277,6 @@ const AdminPanel = () => {
   const [authenticated, setAuthenticated] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    image_url: '',
     coordinates: ''
   });
 
@@ -342,38 +323,12 @@ const AdminPanel = () => {
     }
   };
 
-  const handleAddQuest = () => {
-    setEditingQuest(null);
-    setFormData({
-      name: '',
-      description: '',
-      image_url: '',
-      coordinates: ''
-    });
-    setShowModal(true);
-  };
-
   const handleEditQuest = (quest) => {
     setEditingQuest(quest);
     setFormData({
-      name: quest.name || '',
-      description: quest.description || '',
-      image_url: quest.image_url || '',
       coordinates: quest.coordinates || ''
     });
     setShowModal(true);
-  };
-
-  const handleDeleteQuest = async (questId) => {
-    if (window.confirm('Вы уверены, что хотите удалить этот квест?')) {
-      try {
-        await deleteQuest(questId);
-        await fetchQuests();
-      } catch (error) {
-        console.error('Ошибка удаления квеста:', error);
-        alert('Ошибка при удалении квеста');
-      }
-    }
   };
 
   const handleSaveQuest = async (e) => {
@@ -381,14 +336,12 @@ const AdminPanel = () => {
     try {
       if (editingQuest) {
         await updateQuest(editingQuest.id, formData);
-      } else {
-        await createQuest(formData);
+        setShowModal(false);
+        await fetchQuests();
       }
-      setShowModal(false);
-      await fetchQuests();
     } catch (error) {
-      console.error('Ошибка сохранения квеста:', error);
-      alert('Ошибка при сохранении квеста');
+      console.error('Ошибка сохранения маршрута:', error);
+      alert('Ошибка при сохранении маршрута');
     }
   };
 
@@ -411,37 +364,31 @@ const AdminPanel = () => {
   return (
     <AdminContainer>
       <Header>
-        <Title>Панель управления квестами</Title>
+        <Title>Редактирование маршрутов квестов</Title>
+        <Subtitle>Выберите квест для редактирования его маршрута</Subtitle>
         <div style={{ display: 'flex', gap: '10px' }}>
           <BackButton onClick={handleBackClick}>← Назад</BackButton>
           <LogoutButton onClick={handleLogout}>🚪 Выйти</LogoutButton>
-          <AddButton onClick={handleAddQuest}>+ Добавить квест</AddButton>
         </div>
       </Header>
 
       <QuestsList>
         {quests.map((quest) => (
           <QuestCard key={quest.id}>
-            <QuestTitle>{quest.name}</QuestTitle>
+            <QuestTitle>{quest.name || quest.title}</QuestTitle>
             <QuestDescription>{quest.description}</QuestDescription>
             <QuestActions>
               <ActionButton 
                 className="view" 
                 onClick={() => window.open(`/quest/${quest.id}`, '_blank')}
               >
-                Просмотр
+                Просмотр квеста
               </ActionButton>
               <ActionButton 
                 className="edit" 
                 onClick={() => handleEditQuest(quest)}
               >
-                Редактировать
-              </ActionButton>
-              <ActionButton 
-                className="delete" 
-                onClick={() => handleDeleteQuest(quest.id)}
-              >
-                Удалить
+                Редактировать маршрут
               </ActionButton>
             </QuestActions>
           </QuestCard>
@@ -453,44 +400,18 @@ const AdminPanel = () => {
           <ModalContent>
             <ModalHeader>
               <ModalTitle>
-                {editingQuest ? 'Редактировать квест' : 'Добавить новый квест'}
+                Редактирование маршрута: {editingQuest?.name || editingQuest?.title}
               </ModalTitle>
               <CloseButton onClick={() => setShowModal(false)}>×</CloseButton>
             </ModalHeader>
             
             <Form onSubmit={handleSaveQuest}>
-              <FormGroup>
-                <Label>Название квеста</Label>
-                <Input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  required
-                />
-              </FormGroup>
-
-              <FormGroup>
-                <Label>Описание</Label>
-                <TextArea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  required
-                />
-              </FormGroup>
-
-              <FormGroup>
-                <Label>URL изображения</Label>
-                <Input
-                  type="url"
-                  name="image_url"
-                  value={formData.image_url}
-                  onChange={handleInputChange}
-                />
-              </FormGroup>
-
               <SectionTitle>Редактирование маршрута</SectionTitle>
+              <p style={{ color: '#666', marginBottom: '20px' }}>
+                Используйте редактор карты для изменения маршрута квеста. 
+                Кликайте на карту для добавления точек, перетаскивайте существующие точки для изменения их положения.
+              </p>
+              
               <MapEditor 
                 coordinates={formData.coordinates}
                 onCoordinatesChange={(newCoordinates) => {
@@ -502,7 +423,7 @@ const AdminPanel = () => {
               />
 
               <SaveButton type="submit">
-                {editingQuest ? 'Сохранить изменения' : 'Создать квест'}
+                Сохранить маршрут
               </SaveButton>
             </Form>
           </ModalContent>

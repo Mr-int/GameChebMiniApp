@@ -96,19 +96,6 @@ export async function getRouteById(id) {
 }
 
 // Функции для административной панели
-export async function createQuest(questData) {
-  try {
-    const response = await api.post('/api/routes/', {
-      ...questData,
-      api_token: API_TOKEN
-    });
-    return response;
-  } catch (error) {
-    console.error('Ошибка создания квеста:', error);
-    throw error;
-  }
-}
-
 export async function updateQuest(questId, questData) {
   try {
     const response = await api.put(`/api/routes/${questId}/`, {
@@ -117,21 +104,7 @@ export async function updateQuest(questId, questData) {
     });
     return response;
   } catch (error) {
-    console.error('Ошибка обновления квеста:', error);
-    throw error;
-  }
-}
-
-export async function deleteQuest(questId) {
-  try {
-    const response = await api.delete(`/api/routes/${questId}/`, {
-      params: {
-        api_token: API_TOKEN
-      }
-    });
-    return response;
-  } catch (error) {
-    console.error('Ошибка удаления квеста:', error);
+    console.error('Ошибка обновления маршрута квеста:', error);
     throw error;
   }
 } 
