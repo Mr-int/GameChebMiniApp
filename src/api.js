@@ -1,10 +1,9 @@
 import axios from 'axios';
-
-const API_TOKEN = '00d197fe99bd7b7eb8b46d385d9713fe7a6a2d60593aa5634d116f7501eee4dc';
+import { API_CONFIG } from './api.config';
 
 export const api = axios.create({
-  baseURL: '', // Используем относительный путь для прокси
-  timeout: 10000, // 10 секунд timeout
+  baseURL: API_CONFIG.BASE_URL,
+  timeout: API_CONFIG.TIMEOUT,
   withCredentials: false,
 });
 
@@ -42,15 +41,21 @@ api.interceptors.response.use(
 
 export async function getQuests() {
   try {
-    const response = await api.get('/api/routes/', {
+    const response = await api.get(API_CONFIG.ENDPOINTS.QUESTS, {
       params: {
-        api_token: API_TOKEN,
+        api_token: API_CONFIG.TOKEN,
         v: Date.now() // Добавляем версию для избежания кэширования
       }
     });
     console.log('Полный ответ API:', response);
     console.log('Тип ответа:', typeof response);
     console.log('Ключи ответа:', Object.keys(response));
+    
+    // Проверяем, что ответ не HTML
+    if (typeof response === 'string' && response.includes('<!doctype html>')) {
+      console.error('Получен HTML вместо JSON - неправильный URL API');
+      throw new Error('Неправильный URL API - получен HTML ответ');
+    }
     
     // Проверяем структуру ответа
     if (response && response.results) {
@@ -83,14 +88,14 @@ export async function getQuests() {
 
 export async function getRouteById(id) {
   try {
-    const response = await api.get(`/api/routes/${id}/`, {
+    const response = await api.get(API_CONFIG.ENDPOINTS.QUEST_BY_ID(id), {
       params: {
-        api_token: API_TOKEN
+        api_token: API_CONFIG.TOKEN
       }
     });
     return response;
   } catch (error) {
-    console.error('Ошибка запроса к /api/routes/' + id + '/', error);
+    console.error('Ошибка запроса к ' + API_CONFIG.ENDPOINTS.QUEST_BY_ID(id), error);
     throw error;
   }
 }
@@ -98,9 +103,9 @@ export async function getRouteById(id) {
 // Функции для административной панели
 export async function updateQuest(questId, questData) {
   try {
-    const response = await api.put(`/api/routes/${questId}/`, {
+    const response = await api.put(API_CONFIG.ENDPOINTS.QUEST_BY_ID(questId), {
       ...questData,
-      api_token: API_TOKEN
+      api_token: API_CONFIG.TOKEN
     });
     return response;
   } catch (error) {
