@@ -3,7 +3,7 @@ import axios from 'axios';
 const API_TOKEN = '00d197fe99bd7b7eb8b46d385d9713fe7a6a2d60593aa5634d116f7501eee4dc';
 
 export const api = axios.create({
-  baseURL: 'http://gamecheb.tech', // Правильный URL вашего API
+  baseURL: '', // Используем относительный путь для прокси
   timeout: 10000, // 10 секунд timeout
   withCredentials: false,
 });
@@ -42,7 +42,7 @@ api.interceptors.response.use(
 
 export async function getQuests() {
   try {
-    const response = await api.get('/docs/routes', {
+    const response = await api.get('/api/routes/', {
       params: {
         api_token: API_TOKEN,
         v: Date.now() // Добавляем версию для избежания кэширования
@@ -52,12 +52,7 @@ export async function getQuests() {
     console.log('Тип ответа:', typeof response);
     console.log('Ключи ответа:', Object.keys(response));
     
-    // Проверяем, что ответ не HTML
-    if (typeof response === 'string' && response.includes('<!doctype html>')) {
-      console.error('Получен HTML вместо JSON - неправильный URL API');
-      console.error('Текущий baseURL:', api.defaults.baseURL);
-      throw new Error('Неправильный URL API - получен HTML ответ');
-    }
+
     
     // Проверяем структуру ответа
     if (response && response.results) {
@@ -90,14 +85,14 @@ export async function getQuests() {
 
 export async function getRouteById(id) {
   try {
-    const response = await api.get(`/docs/routes/${id}`, {
+    const response = await api.get(`/api/routes/${id}/`, {
       params: {
         api_token: API_TOKEN
       }
     });
     return response;
   } catch (error) {
-    console.error('Ошибка запроса к /docs/routes/' + id, error);
+    console.error('Ошибка запроса к /api/routes/' + id + '/', error);
     throw error;
   }
 } 
