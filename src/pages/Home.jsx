@@ -99,10 +99,15 @@ const Home = () => {
       setLoading(true);
       const data = await getQuests();
       console.log('Ответ сервера:', data);
+      
       // Проверяем разные варианты структуры данных
       if (Array.isArray(data.results)) {
+        console.log('Найдены results:', data.results);
+        console.log('Первый квест:', data.results[0]);
         setQuests(data.results);
       } else if (Array.isArray(data)) {
+        console.log('Данные - массив:', data);
+        console.log('Первый квест:', data[0]);
         setQuests(data);
       } else {
         console.log('Неожиданная структура данных:', data);
@@ -157,18 +162,28 @@ const Home = () => {
       <Divider />
       <GameChebText>GameCheb</GameChebText>
       <QuestsGrid>
-        {Array.isArray(quests) && quests.map((quest) => (
-          <QuestCard key={quest.id} onClick={() => handleQuestClick(quest)}>
-            <QuestImage 
-              src={'/forest.jpg'}
-              alt={quest.name} 
-            />
-            <QuestContent>
-              <QuestTitle>{quest.name}</QuestTitle>
-              <QuestDescription>{quest.description}</QuestDescription>
-            </QuestContent>
-          </QuestCard>
-        ))}
+        {Array.isArray(quests) && quests.map((quest) => {
+          // Получаем первое изображение из точек маршрута
+          const firstPoint = quest.points && quest.points[0] && quest.points[0].point;
+          const imageUrl = firstPoint?.photo || '/forest.jpg'; // fallback на статичное изображение
+          
+          return (
+            <QuestCard key={quest.id} onClick={() => handleQuestClick(quest)}>
+              <QuestImage 
+                src={imageUrl}
+                alt={quest.name} 
+                onError={(e) => {
+                  // Если изображение не загрузилось, используем fallback
+                  e.target.src = '/forest.jpg';
+                }}
+              />
+              <QuestContent>
+                <QuestTitle>{quest.name}</QuestTitle>
+                <QuestDescription>{quest.description}</QuestDescription>
+              </QuestContent>
+            </QuestCard>
+          );
+        })}
       </QuestsGrid>
 
       {selectedQuest && (
