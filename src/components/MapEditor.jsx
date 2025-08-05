@@ -1,7 +1,20 @@
 import React, { useRef, useEffect, useState } from 'react';
 import styled from 'styled-components';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents } from 'react-leaflet';
+import L from 'leaflet';
 
-const MapContainer = styled.div`
+// Импортируем стили Leaflet
+import 'leaflet/dist/leaflet.css';
+
+// Фиксим проблему с иконками маркеров
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
+
+const MapContainerStyled = styled.div`
   width: 100%;
   height: 500px;
   border: 2px solid #e0e0e0;
@@ -11,21 +24,7 @@ const MapContainer = styled.div`
   margin-bottom: 20px;
 `;
 
-const MapFrame = styled.iframe`
-  width: 100%;
-  height: 100%;
-  border: none;
-`;
 
-const MapOverlay = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-  z-index: 10;
-`;
 
 const MapControls = styled.div`
   display: flex;
@@ -98,69 +97,61 @@ const Instructions = styled.div`
   color: #856404;
 `;
 
+// Компонент для обработки кликов по карте
+const MapClickHandler = ({ onMapClick, mode }) => {
+  useMapEvents({
+    click: (e) => {
+      if (mode === 'add') {
+        onMapClick(e.latlng);
+      }
+    },
+  });
+  return null;
+};
+
 const MapEditor = ({ points = [], onPointsChange, questName }) => {
   const [mode, setMode] = useState('view'); // view, add, edit, delete
-  const [mapUrl, setMapUrl] = useState('');
-  const [centerLat, setCenterLat] = useState(55.7558); // Москва по умолчанию
-  const [centerLng, setCenterLng] = useState(37.6176);
-  const [zoom, setZoom] = useState(13);
+  const [mapCenter, setMapCenter] = useState([55.7558, 37.6176]); // Москва по умолчанию
+  const [mapZoom, setMapZoom] = useState(13);
 
   console.log('MapEditor получил точки:', points);
   console.log('Количество точек:', points.length);
   console.log('Тип точек:', typeof points);
 
-  // Генерируем URL для карты с маркерами
+  // Обновляем центр карты при изменении точек
   useEffect(() => {
     console.log('useEffect MapEditor - точки:', points);
     console.log('Первая точка:', points[0]);
     
-    if (points.length === 0) {
-      console.log('Нет точек, показываем карту по умолчанию');
-      // Если нет точек, показываем карту по умолчанию
-      setMapUrl(`https://www.openstreetmap.org/export/embed.html?bbox=${centerLng-0.01},${centerLat-0.01},${centerLng+0.01},${centerLat+0.01}&layer=mapnik&marker=${centerLat},${centerLng}`);
-      return;
+    const validPoints = points.filter(p => p.point && typeof p.point.latitude === 'number' && typeof p.point.longitude === 'number');
+    
+    if (validPoints.length > 0) {
+      // Центрируем карту на первой точке
+      setMapCenter([validPoints[0].point.latitude, validPoints[0].point.longitude]);
+      setMapZoom(15);
     }
+  }, [points]);
 
-    // Находим границы для центрирования карты
-    console.log('Обрабатываем точки для карты');
-    console.log('Структура первой точки:', points[0]);
-    
-    // Проверяем структуру точек и извлекаем координаты
-    const validPoints = points.filter(p => {
-      if (p.point && typeof p.point.latitude === 'number' && typeof p.point.longitude === 'number') {
-        return true;
-      }
-      console.warn('Некорректная точка:', p);
-      return false;
-    });
-    
-    if (validPoints.length === 0) {
-      console.log('Нет валидных точек с координатами');
-      setMapUrl(`https://www.openstreetmap.org/export/embed.html?bbox=${centerLng-0.01},${centerLat-0.01},${centerLng+0.01},${centerLat+0.01}&layer=mapnik&marker=${centerLat},${centerLng}`);
-      return;
+  // Обработчик клика по карте
+  const handleMapClick = (latlng) => {
+    if (mode === 'add') {
+      const newPoint = {
+        point: {
+          id: `point_${Date.now()}`,
+          name: `Точка ${points.length + 1}`,
+          latitude: latlng.lat,
+          longitude: latlng.lng,
+          photo: null,
+          description: 'Новая точка маршрута'
+        },
+        order: points.length + 1
+      };
+
+      const newPoints = [...points, newPoint];
+      onPointsChange(newPoints);
+      alert(`✅ Добавлена точка: ${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)}`);
     }
-    
-    const lats = validPoints.map(p => p.point.latitude);
-    const lngs = validPoints.map(p => p.point.longitude);
-    const minLat = Math.min(...lats);
-    const maxLat = Math.max(...lats);
-    const minLng = Math.min(...lngs);
-    const maxLng = Math.max(...lngs);
-
-    // Добавляем отступы
-    const latPadding = (maxLat - minLat) * 0.1;
-    const lngPadding = (maxLng - minLng) * 0.1;
-
-    const bbox = `${minLng - lngPadding},${minLat - latPadding},${maxLng + lngPadding},${maxLat + latPadding}`;
-    
-    // Создаем маркеры для всех точек
-    const markers = validPoints.map((pointData, index) => {
-      const color = index === 0 ? 'green' : index === validPoints.length - 1 ? 'red' : 'blue';
-      return `&marker=${pointData.point.latitude},${pointData.point.longitude}`;
-    }).join('');
-
-    setMapUrl(`https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik${markers}`);
-  }, [points, centerLat, centerLng]);
+  };
 
   // Добавляем промежуточную точку
   const addIntermediatePoint = () => {
@@ -247,6 +238,31 @@ const MapEditor = ({ points = [], onPointsChange, questName }) => {
     alert('✅ Маршрут оптимизирован!');
   };
 
+  // Создаем кастомные иконки для маркеров
+  const createCustomIcon = (color) => {
+    return L.divIcon({
+      className: 'custom-marker',
+      html: `<div style="
+        background-color: ${color};
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 2px solid white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 12px;
+      "></div>`,
+      iconSize: [20, 20],
+      iconAnchor: [10, 10],
+    });
+  };
+
+  const validPoints = points.filter(p => p.point && typeof p.point.latitude === 'number' && typeof p.point.longitude === 'number');
+
   return (
     <div>
       <MapInfo>
@@ -260,6 +276,7 @@ const MapEditor = ({ points = [], onPointsChange, questName }) => {
         • <strong>Зеленый маркер</strong> - начало маршрута<br/>
         • <strong>Синие маркеры</strong> - промежуточные точки<br/>
         • <strong>Красный маркер</strong> - конец маршрута<br/>
+        • Переключитесь в режим "Добавление точек" и кликайте по карте<br/>
         • Если точек нет, нажмите "🧪 Добавить тестовые точки"<br/>
         • Используйте кнопки ниже для управления маршрутом
       </Instructions>
@@ -334,17 +351,64 @@ const MapEditor = ({ points = [], onPointsChange, questName }) => {
         </ControlButton>
       </MapControls>
 
-      <MapContainer>
-        <MapFrame
-          src={mapUrl}
-          title="Карта маршрута"
-        />
-        <MapOverlay />
-      </MapContainer>
+      <MapContainerStyled>
+        <MapContainer
+          center={mapCenter}
+          zoom={mapZoom}
+          style={{ width: '100%', height: '100%' }}
+          scrollWheelZoom={true}
+        >
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
+          />
+          
+          {/* Обработчик кликов по карте */}
+          <MapClickHandler onMapClick={handleMapClick} mode={mode} />
+          
+          {/* Маркеры точек */}
+          {validPoints.map((pointData, index) => {
+            const color = index === 0 ? '#28a745' : index === validPoints.length - 1 ? '#dc3545' : '#667eea';
+            const icon = createCustomIcon(color);
+            
+            return (
+              <Marker
+                key={pointData.point.id}
+                position={[pointData.point.latitude, pointData.point.longitude]}
+                icon={icon}
+              >
+                <Popup>
+                  <div style={{ maxWidth: 220 }}>
+                    <h3 style={{ margin: '0 0 5px 0', fontSize: 16 }}>
+                      {pointData.point.name}
+                    </h3>
+                    <p style={{ margin: 0, fontSize: 14, color: '#666' }}>
+                      {pointData.point.description}
+                    </p>
+                    <div style={{ fontSize: 12, color: '#999', marginTop: 5 }}>
+                      Порядок: {pointData.order}
+                    </div>
+                    <div style={{ fontSize: 12, color: '#999' }}>
+                      Координаты: {pointData.point.latitude.toFixed(6)}, {pointData.point.longitude.toFixed(6)}
+                    </div>
+                  </div>
+                </Popup>
+              </Marker>
+            );
+          })}
+          
+          {/* Линия маршрута */}
+          {validPoints.length > 1 && (
+            <Polyline
+              positions={validPoints.map(({ point }) => [point.latitude, point.longitude])}
+              pathOptions={{ color: '#2196F3', weight: 3, opacity: 0.8 }}
+            />
+          )}
+        </MapContainer>
+      </MapContainerStyled>
 
       <div style={{ marginTop: '15px', fontSize: '12px', color: '#666' }}>
-        <strong>💡 Подсказка:</strong> Карта автоматически центрируется на вашем маршруте. 
-        Используйте кнопки для добавления промежуточных точек и создания красивого маршрута.
+        <strong>💡 Подсказка:</strong> Переключитесь в режим "Добавление точек" и кликайте по карте для добавления новых точек маршрута.
       </div>
     </div>
   );
