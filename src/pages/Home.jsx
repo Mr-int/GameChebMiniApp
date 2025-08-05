@@ -198,13 +198,54 @@ const Home = () => {
   const handleCloseRouteEditor = () => {
     setShowRouteEditor(false);
     setEditingQuest(null);
+    // Принудительно обновляем состояние кнопки
+    setTimeout(() => {
+      window.location.reload();
+    }, 100);
   };
 
   const handleLogout = () => {
     clearSession();
     setShowRouteEditor(false);
     setEditingQuest(null);
-    alert('✅ Вы вышли из режима редактирования');
+    showNotification('✅ Вы вышли из режима редактирования', 'success');
+    // Принудительно обновляем состояние кнопки
+    setTimeout(() => {
+      window.location.reload();
+    }, 100);
+  };
+
+  // Функция для показа уведомлений
+  const showNotification = (message, type = 'info') => {
+    // Создаем временное уведомление
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#17a2b8'};
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 3000;
+      font-size: 14px;
+      font-weight: 500;
+      opacity: 1;
+      transform: translateX(0);
+      transition: all 0.3s ease;
+      max-width: 300px;
+    `;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.style.opacity = '0';
+      notification.style.transform = 'translateX(100%)';
+      setTimeout(() => {
+        document.body.removeChild(notification);
+      }, 300);
+    }, 3000);
   };
 
   if (loading) {

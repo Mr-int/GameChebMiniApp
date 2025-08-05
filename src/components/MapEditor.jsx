@@ -129,11 +129,12 @@ const MapClickHandler = ({ onMapClick, mode, isDragging }) => {
 };
 
 const MapEditor = ({ points = [], onPointsChange, questName }) => {
-  const [mode, setMode] = useState('view'); // view, add, edit, delete
+  const [mode, setMode] = useState('view'); // view, add, edit, delete, select
   const [mapCenter, setMapCenter] = useState([55.7558, 37.6176]); // Москва по умолчанию
   const [mapZoom, setMapZoom] = useState(13);
   const [notification, setNotification] = useState({ visible: false, message: '', type: 'info' });
   const [isDragging, setIsDragging] = useState(false);
+  const [selectedPoints, setSelectedPoints] = useState([]); // Для выбора точек для промежуточной
 
   console.log('MapEditor получил точки:', points);
   console.log('Количество точек:', points.length);
@@ -182,38 +183,65 @@ const MapEditor = ({ points = [], onPointsChange, questName }) => {
     }
   };
 
-  // Добавляем промежуточную точку (невидимую)
+  // Добавляем промежуточную точку между выбранными точками
   const addIntermediatePoint = () => {
     const validPoints = points.filter(p => p.point && typeof p.point.latitude === 'number' && typeof p.point.longitude === 'number');
     
-    if (validPoints.length < 2) {
-      showNotification('❌ Нужно минимум 2 точки для добавления промежуточной!', 'error');
+    if (selectedPoints.length !== 2) {
+      showNotification('❌ Выберите ровно 2 точки для добавления промежуточной между ними!', 'error');
       return;
     }
 
-    // Находим середину между первой и последней точкой
-    const firstPoint = validPoints[0].point;
-    const lastPoint = validPoints[validPoints.length - 1].point;
+    // Находим выбранные точки
+    const firstPointData = validPoints.find(p => p.point.id === selectedPoints[0]);
+    const secondPointData = validPoints.find(p => p.point.id === selectedPoints[1]);
     
-    const midLat = (firstPoint.latitude + lastPoint.latitude) / 2;
-    const midLng = (firstPoint.longitude + lastPoint.longitude) / 2;
+    if (!firstPointData || !secondPointData) {
+      showNotification('❌ Выбранные точки не найдены!', 'error');
+      return;
+    }
 
+    const firstPoint = firstPointData.point;
+    const secondPoint = secondPointData.point;
+    
+    // Находим середину между выбранными точками
+    const midLat = (firstPoint.latitude + secondPoint.latitude) / 2;
+    const midLng = (firstPoint.longitude + secondPoint.longitude) / 2;
+
+    // Определяем порядок для вставки между выбранными точками
+    const firstOrder = Math.min(firstPointData.order, secondPointData.order);
+    const secondOrder = Math.max(firstPointData.order, secondPointData.order);
+    const newOrder = firstOrder + 1;
+
+    // Создаем новую промежуточную точку
     const newPoint = {
       point: {
         id: `intermediate_${Date.now()}`,
-        name: `Промежуточная точка ${points.length + 1}`,
+        name: `Промежуточная точка ${newOrder}`,
         latitude: midLat,
         longitude: midLng,
         photo: null,
         description: 'Промежуточная точка маршрута',
         isIntermediate: true // Флаг для невидимых точек
       },
-      order: points.length + 1
+      order: newOrder
     };
 
-    const newPoints = [...points, newPoint];
+    // Вставляем точку между выбранными и обновляем порядок остальных
+    const newPoints = [...points];
+    newPoints.splice(newOrder - 1, 0, newPoint);
+    
+    // Обновляем порядок точек после вставленной
+    newPoints.forEach((p, index) => {
+      if (p.order >= newOrder && p.point.id !== newPoint.point.id) {
+        p.order = index + 1;
+      }
+    });
+
     onPointsChange(newPoints);
-    showNotification('✅ Добавлена промежуточная точка (невидимая)', 'success');
+    setSelectedPoints([]); // Сбрасываем выбор
+    setMode('view'); // Возвращаемся в режим просмотра
+    showNotification('✅ Добавлена промежуточная точка между выбранными точками', 'success');
   };
 
   // Удаляем последнюю промежуточную точку
@@ -313,24 +341,46 @@ const MapEditor = ({ points = [], onPointsChange, questName }) => {
     showNotification('✅ Точка перемещена', 'success');
   };
 
+  // Обработчик клика по маркеру для выбора точек
+  const handleMarkerClick = (pointId) => {
+    if (mode === 'select') {
+      if (selectedPoints.includes(pointId)) {
+        // Убираем точку из выбора
+        setSelectedPoints(selectedPoints.filter(id => id !== pointId));
+        showNotification('❌ Точка убрана из выбора', 'info');
+      } else {
+        // Добавляем точку в выбор
+        if (selectedPoints.length < 2) {
+          setSelectedPoints([...selectedPoints, pointId]);
+          showNotification(`✅ Точка добавлена в выбор (${selectedPoints.length + 1}/2)`, 'success');
+        } else {
+          showNotification('❌ Можно выбрать только 2 точки!', 'error');
+        }
+      }
+    }
+  };
+
   const validPoints = points.filter(p => p.point && typeof p.point.latitude === 'number' && typeof p.point.longitude === 'number');
 
   return (
     <div>
       <MapInfo>
         <strong>🗺️ Редактор маршрута:</strong> {questName} | 
-        Режим: {mode === 'view' ? 'Просмотр' : mode === 'add' ? 'Добавление точек' : mode === 'edit' ? 'Редактирование' : 'Удаление'} | 
-        Точок: {points.length} (валидных: {points.filter(p => p.point && typeof p.point.latitude === 'number' && typeof p.point.longitude === 'number').length})
+        Режим: {mode === 'view' ? 'Просмотр' : mode === 'add' ? 'Добавление точек' : mode === 'select' ? 'Выбор точек' : mode === 'edit' ? 'Редактирование' : 'Удаление'} | 
+        Точок: {points.length} (валидных: {points.filter(p => p.point && typeof p.point.latitude === 'number' && typeof p.point.longitude === 'number').length}) | 
+        Выбрано: {selectedPoints.length}/2
       </MapInfo>
 
       <Instructions>
         <strong>💡 Как использовать:</strong><br/>
         • <strong>Зеленый маркер</strong> - начало маршрута<br/>
-        • <strong>Синие маркеры</strong> - промежуточные точки<br/>
+        • <strong>Синие маркеры</strong> - обычные точки<br/>
+        • <strong>Серые маркеры</strong> - промежуточные точки<br/>
+        • <strong>Желтые маркеры</strong> - выбранные точки<br/>
         • <strong>Красный маркер</strong> - конец маршрута<br/>
-        • Переключитесь в режим "Добавление точек" и кликайте по карте<br/>
-        • Перетаскивайте маркеры для изменения их позиции<br/>
-        • Промежуточные точки невидимы, но влияют на маршрут<br/>
+        • <strong>Режим "Добавление точек"</strong> - кликайте по карте для новых точек<br/>
+        • <strong>Режим "Выбрать точки"</strong> - выберите 2 точки для промежуточной<br/>
+        • <strong>Перетаскивание</strong> - все маркеры можно двигать<br/>
         • Если точек нет, нажмите "🧪 Добавить тестовые точки"<br/>
         • Используйте кнопки ниже для управления маршрутом
       </Instructions>
@@ -338,21 +388,37 @@ const MapEditor = ({ points = [], onPointsChange, questName }) => {
       <MapControls>
         <ControlButton 
           className={mode === 'view' ? 'active' : ''} 
-          onClick={() => setMode('view')}
+          onClick={() => {
+            setMode('view');
+            setSelectedPoints([]);
+          }}
         >
           👁️ Просмотр
         </ControlButton>
         <ControlButton 
           className={mode === 'add' ? 'active' : ''} 
-          onClick={() => setMode('add')}
+          onClick={() => {
+            setMode('add');
+            setSelectedPoints([]);
+          }}
         >
           ➕ Добавить точку
         </ControlButton>
         <ControlButton 
+          className={mode === 'select' ? 'active' : ''} 
+          onClick={() => {
+            setMode('select');
+            setSelectedPoints([]);
+          }}
+        >
+          🎯 Выбрать точки
+        </ControlButton>
+        <ControlButton 
           className="success"
           onClick={addIntermediatePoint}
+          disabled={selectedPoints.length !== 2}
         >
-          🎯 Добавить промежуточную
+          🔗 Добавить промежуточную ({selectedPoints.length}/2)
         </ControlButton>
         <ControlButton 
           className="danger"
@@ -420,49 +486,69 @@ const MapEditor = ({ points = [], onPointsChange, questName }) => {
           {/* Обработчик кликов по карте */}
           <MapClickHandler onMapClick={handleMapClick} mode={mode} />
           
-          {/* Маркеры точек (только видимые) */}
-          {validPoints
-            .filter(pointData => !pointData.point.isIntermediate) // Фильтруем невидимые точки
-            .map((pointData, index) => {
-              const color = index === 0 ? '#28a745' : index === validPoints.filter(p => !p.point.isIntermediate).length - 1 ? '#dc3545' : '#667eea';
-              const icon = createCustomIcon(color, true);
-              
-              return (
-                <Marker
-                  key={pointData.point.id}
-                  position={[pointData.point.latitude, pointData.point.longitude]}
-                  icon={icon}
-                  draggable={true}
-                  eventHandlers={{
-                    dragstart: () => setIsDragging(true),
-                    dragend: (e) => {
-                      setIsDragging(false);
-                      handleMarkerDrag(pointData.point.id, e.target.getLatLng());
-                    }
-                  }}
-                >
-                  <Popup>
-                    <div style={{ maxWidth: 220 }}>
-                      <h3 style={{ margin: '0 0 5px 0', fontSize: 16 }}>
-                        {pointData.point.name}
-                      </h3>
-                      <p style={{ margin: 0, fontSize: 14, color: '#666' }}>
-                        {pointData.point.description}
-                      </p>
-                      <div style={{ fontSize: 12, color: '#999', marginTop: 5 }}>
-                        Порядок: {pointData.order}
-                      </div>
-                      <div style={{ fontSize: 12, color: '#999' }}>
-                        Координаты: {pointData.point.latitude.toFixed(6)}, {pointData.point.longitude.toFixed(6)}
-                      </div>
-                      <div style={{ fontSize: 12, color: '#667eea', marginTop: 5, fontStyle: 'italic' }}>
-                        💡 Перетащите маркер для изменения позиции
-                      </div>
+          {/* Маркеры точек (включая промежуточные) */}
+          {validPoints.map((pointData, index) => {
+            const isSelected = selectedPoints.includes(pointData.point.id);
+            const isIntermediate = pointData.point.isIntermediate;
+            
+            // Определяем цвет маркера
+            let color = '#667eea'; // по умолчанию синий
+            if (isSelected) {
+              color = '#ffc107'; // желтый для выбранных
+            } else if (index === 0) {
+              color = '#28a745'; // зеленый для начала
+            } else if (index === validPoints.length - 1) {
+              color = '#dc3545'; // красный для конца
+            } else if (isIntermediate) {
+              color = '#6c757d'; // серый для промежуточных
+            }
+            
+            const icon = createCustomIcon(color, true);
+            
+            return (
+              <Marker
+                key={pointData.point.id}
+                position={[pointData.point.latitude, pointData.point.longitude]}
+                icon={icon}
+                draggable={true}
+                eventHandlers={{
+                  dragstart: () => setIsDragging(true),
+                  dragend: (e) => {
+                    setIsDragging(false);
+                    handleMarkerDrag(pointData.point.id, e.target.getLatLng());
+                  },
+                  click: () => handleMarkerClick(pointData.point.id)
+                }}
+              >
+                <Popup>
+                  <div style={{ maxWidth: 220 }}>
+                    <h3 style={{ margin: '0 0 5px 0', fontSize: 16 }}>
+                      {pointData.point.name}
+                      {isSelected && <span style={{ color: '#ffc107', marginLeft: 5 }}>⭐</span>}
+                      {isIntermediate && <span style={{ color: '#6c757d', marginLeft: 5 }}>🔗</span>}
+                    </h3>
+                    <p style={{ margin: 0, fontSize: 14, color: '#666' }}>
+                      {pointData.point.description}
+                    </p>
+                    <div style={{ fontSize: 12, color: '#999', marginTop: 5 }}>
+                      Порядок: {pointData.order}
                     </div>
-                  </Popup>
-                </Marker>
-              );
-            })}
+                    <div style={{ fontSize: 12, color: '#999' }}>
+                      Координаты: {pointData.point.latitude.toFixed(6)}, {pointData.point.longitude.toFixed(6)}
+                    </div>
+                    <div style={{ fontSize: 12, color: '#667eea', marginTop: 5, fontStyle: 'italic' }}>
+                      💡 Перетащите маркер для изменения позиции
+                    </div>
+                    {mode === 'select' && (
+                      <div style={{ fontSize: 12, color: '#ffc107', marginTop: 5, fontStyle: 'italic' }}>
+                        💡 Кликните для выбора точки
+                      </div>
+                    )}
+                  </div>
+                </Popup>
+              </Marker>
+            );
+          })}
           
           {/* Линия маршрута (включая промежуточные точки) */}
           {validPoints.length > 1 && (
