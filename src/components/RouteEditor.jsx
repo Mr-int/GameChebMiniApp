@@ -264,7 +264,7 @@ const RouteEditor = ({ quests, onClose, onLogout }) => {
 
   return (
     <EditorOverlay onClick={onClose}>
-      <EditorModal onClick={(e) => e.stopPropagation()}>
+      <EditorModal onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
         <EditorHeader>
           <EditorTitle>Редактор маршрутов</EditorTitle>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
