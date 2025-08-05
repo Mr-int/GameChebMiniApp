@@ -105,17 +105,43 @@ const MapEditor = ({ points = [], onPointsChange, questName }) => {
   const [centerLng, setCenterLng] = useState(37.6176);
   const [zoom, setZoom] = useState(13);
 
+  console.log('MapEditor получил точки:', points);
+  console.log('Количество точек:', points.length);
+  console.log('Тип точек:', typeof points);
+
   // Генерируем URL для карты с маркерами
   useEffect(() => {
+    console.log('useEffect MapEditor - точки:', points);
+    console.log('Первая точка:', points[0]);
+    
     if (points.length === 0) {
+      console.log('Нет точек, показываем карту по умолчанию');
       // Если нет точек, показываем карту по умолчанию
       setMapUrl(`https://www.openstreetmap.org/export/embed.html?bbox=${centerLng-0.01},${centerLat-0.01},${centerLng+0.01},${centerLat+0.01}&layer=mapnik&marker=${centerLat},${centerLng}`);
       return;
     }
 
     // Находим границы для центрирования карты
-    const lats = points.map(p => p.point.latitude);
-    const lngs = points.map(p => p.point.longitude);
+    console.log('Обрабатываем точки для карты');
+    console.log('Структура первой точки:', points[0]);
+    
+    // Проверяем структуру точек и извлекаем координаты
+    const validPoints = points.filter(p => {
+      if (p.point && typeof p.point.latitude === 'number' && typeof p.point.longitude === 'number') {
+        return true;
+      }
+      console.warn('Некорректная точка:', p);
+      return false;
+    });
+    
+    if (validPoints.length === 0) {
+      console.log('Нет валидных точек с координатами');
+      setMapUrl(`https://www.openstreetmap.org/export/embed.html?bbox=${centerLng-0.01},${centerLat-0.01},${centerLng+0.01},${centerLat+0.01}&layer=mapnik&marker=${centerLat},${centerLng}`);
+      return;
+    }
+    
+    const lats = validPoints.map(p => p.point.latitude);
+    const lngs = validPoints.map(p => p.point.longitude);
     const minLat = Math.min(...lats);
     const maxLat = Math.max(...lats);
     const minLng = Math.min(...lngs);
@@ -128,8 +154,8 @@ const MapEditor = ({ points = [], onPointsChange, questName }) => {
     const bbox = `${minLng - lngPadding},${minLat - latPadding},${maxLng + lngPadding},${maxLat + latPadding}`;
     
     // Создаем маркеры для всех точек
-    const markers = points.map((pointData, index) => {
-      const color = index === 0 ? 'green' : index === points.length - 1 ? 'red' : 'blue';
+    const markers = validPoints.map((pointData, index) => {
+      const color = index === 0 ? 'green' : index === validPoints.length - 1 ? 'red' : 'blue';
       return `&marker=${pointData.point.latitude},${pointData.point.longitude}`;
     }).join('');
 
@@ -138,14 +164,16 @@ const MapEditor = ({ points = [], onPointsChange, questName }) => {
 
   // Добавляем промежуточную точку
   const addIntermediatePoint = () => {
-    if (points.length < 2) {
+    const validPoints = points.filter(p => p.point && typeof p.point.latitude === 'number' && typeof p.point.longitude === 'number');
+    
+    if (validPoints.length < 2) {
       alert('Нужно минимум 2 точки для добавления промежуточной!');
       return;
     }
 
     // Находим середину между первой и последней точкой
-    const firstPoint = points[0].point;
-    const lastPoint = points[points.length - 1].point;
+    const firstPoint = validPoints[0].point;
+    const lastPoint = validPoints[validPoints.length - 1].point;
     
     const midLat = (firstPoint.latitude + lastPoint.latitude) / 2;
     const midLng = (firstPoint.longitude + lastPoint.longitude) / 2;
@@ -153,7 +181,7 @@ const MapEditor = ({ points = [], onPointsChange, questName }) => {
     const newPoint = {
       point: {
         id: `intermediate_${Date.now()}`,
-        name: `Промежуточная точка ${points.length}`,
+        name: `Промежуточная точка ${points.length + 1}`,
         latitude: midLat,
         longitude: midLng,
         photo: null,
@@ -168,7 +196,9 @@ const MapEditor = ({ points = [], onPointsChange, questName }) => {
 
   // Удаляем последнюю промежуточную точку
   const removeLastIntermediate = () => {
-    if (points.length <= 2) {
+    const validPoints = points.filter(p => p.point && typeof p.point.latitude === 'number' && typeof p.point.longitude === 'number');
+    
+    if (validPoints.length <= 2) {
       alert('Нельзя удалить основные точки маршрута!');
       return;
     }
@@ -183,15 +213,17 @@ const MapEditor = ({ points = [], onPointsChange, questName }) => {
 
   // Перемешиваем промежуточные точки для красивого маршрута
   const optimizeRoute = () => {
-    if (points.length <= 2) {
+    const validPoints = points.filter(p => p.point && typeof p.point.latitude === 'number' && typeof p.point.longitude === 'number');
+    
+    if (validPoints.length <= 2) {
       alert('Нужно больше точек для оптимизации маршрута!');
       return;
     }
 
     // Простая оптимизация - сортируем по расстоянию от начальной точки
-    const firstPoint = points[0];
-    const lastPoint = points[points.length - 1];
-    const intermediatePoints = points.slice(1, -1);
+    const firstPoint = validPoints[0];
+    const lastPoint = validPoints[validPoints.length - 1];
+    const intermediatePoints = validPoints.slice(1, -1);
 
     // Сортируем промежуточные точки по расстоянию от начальной
     intermediatePoints.sort((a, b) => {
@@ -220,7 +252,7 @@ const MapEditor = ({ points = [], onPointsChange, questName }) => {
       <MapInfo>
         <strong>🗺️ Редактор маршрута:</strong> {questName} | 
         Режим: {mode === 'view' ? 'Просмотр' : mode === 'add' ? 'Добавление точек' : mode === 'edit' ? 'Редактирование' : 'Удаление'} | 
-        Точок: {points.length}
+        Точок: {points.length} (валидных: {points.filter(p => p.point && typeof p.point.latitude === 'number' && typeof p.point.longitude === 'number').length})
       </MapInfo>
 
       <Instructions>
@@ -228,6 +260,7 @@ const MapEditor = ({ points = [], onPointsChange, questName }) => {
         • <strong>Зеленый маркер</strong> - начало маршрута<br/>
         • <strong>Синие маркеры</strong> - промежуточные точки<br/>
         • <strong>Красный маркер</strong> - конец маршрута<br/>
+        • Если точек нет, нажмите "🧪 Добавить тестовые точки"<br/>
         • Используйте кнопки ниже для управления маршрутом
       </Instructions>
       
@@ -260,6 +293,44 @@ const MapEditor = ({ points = [], onPointsChange, questName }) => {
           onClick={optimizeRoute}
         >
           🔄 Оптимизировать маршрут
+        </ControlButton>
+        <ControlButton 
+          className="success"
+          onClick={() => {
+            if (points.length === 0) {
+              // Создаем тестовые точки для Москвы
+              const testPoints = [
+                {
+                  point: {
+                    id: 'start_1',
+                    name: 'Начальная точка',
+                    latitude: 55.7558,
+                    longitude: 37.6176,
+                    photo: null,
+                    description: 'Начало маршрута'
+                  },
+                  order: 1
+                },
+                {
+                  point: {
+                    id: 'end_1',
+                    name: 'Конечная точка',
+                    latitude: 55.7287,
+                    longitude: 37.6014,
+                    photo: null,
+                    description: 'Конец маршрута'
+                  },
+                  order: 2
+                }
+              ];
+              onPointsChange(testPoints);
+              alert('✅ Добавлены тестовые точки!');
+            } else {
+              alert('Точки уже есть в маршруте!');
+            }
+          }}
+        >
+          🧪 Добавить тестовые точки
         </ControlButton>
       </MapControls>
 

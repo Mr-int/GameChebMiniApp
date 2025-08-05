@@ -208,6 +208,11 @@ const RouteEditor = ({ quests, onClose, onLogout }) => {
   const handleQuestSelect = (questId) => {
     setSelectedQuestId(questId);
     const quest = quests.find(q => q.id === questId);
+    console.log('Выбранный квест:', quest);
+    console.log('Точки квеста:', quest?.points);
+    console.log('Тип точек:', typeof quest?.points);
+    console.log('Длина точек:', quest?.points?.length);
+    
     setSelectedQuest(quest);
     setEditingPoints(quest?.points || []);
     setHasChanges(false);
@@ -318,39 +323,48 @@ const RouteEditor = ({ quests, onClose, onLogout }) => {
             }}>
               <h4 style={{ margin: '0 0 10px 0', color: '#333' }}>📋 Список точек маршрута:</h4>
               <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                {editingPoints.map((pointData, index) => (
-                  <div key={pointData.point.id} style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: '8px',
-                    borderBottom: index < editingPoints.length - 1 ? '1px solid #e0e0e0' : 'none',
-                    backgroundColor: index === 0 ? '#d4edda' : index === editingPoints.length - 1 ? '#f8d7da' : '#fff'
-                  }}>
-                    <div style={{
-                      background: index === 0 ? '#28a745' : index === editingPoints.length - 1 ? '#dc3545' : '#667eea',
-                      color: 'white',
-                      width: '24px',
-                      height: '24px',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      marginRight: '12px'
-                    }}>
-                      {pointData.order}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: '500', color: '#333', marginBottom: '4px' }}>
-                        {pointData.point.name}
-                      </div>
-                      <div style={{ fontSize: '12px', color: '#666' }}>
-                        {pointData.point.latitude.toFixed(6)}, {pointData.point.longitude.toFixed(6)}
-                      </div>
-                    </div>
+                {editingPoints.length === 0 ? (
+                  <div style={{ color: '#666', fontStyle: 'italic' }}>
+                    Нет точек в маршруте
                   </div>
-                ))}
+                ) : (
+                  editingPoints.map((pointData, index) => {
+                    console.log('Отрисовка точки:', pointData);
+                    return (
+                      <div key={pointData.point?.id || index} style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '8px',
+                        borderBottom: index < editingPoints.length - 1 ? '1px solid #e0e0e0' : 'none',
+                        backgroundColor: index === 0 ? '#d4edda' : index === editingPoints.length - 1 ? '#f8d7da' : '#fff'
+                      }}>
+                        <div style={{
+                          background: index === 0 ? '#28a745' : index === editingPoints.length - 1 ? '#dc3545' : '#667eea',
+                          color: 'white',
+                          width: '24px',
+                          height: '24px',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          marginRight: '12px'
+                        }}>
+                          {pointData.order || index + 1}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: '500', color: '#333', marginBottom: '4px' }}>
+                            {pointData.point?.name || 'Без названия'}
+                          </div>
+                          <div style={{ fontSize: '12px', color: '#666' }}>
+                            {pointData.point?.latitude?.toFixed(6) || 'N/A'}, {pointData.point?.longitude?.toFixed(6) || 'N/A'}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </div>
 
