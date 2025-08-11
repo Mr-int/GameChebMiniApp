@@ -174,7 +174,7 @@ const DraggablePoint = ({
           ▼
         </button>
       </div>
-    </div>
+    </DraggablePointContainer>
   );
 };
 
