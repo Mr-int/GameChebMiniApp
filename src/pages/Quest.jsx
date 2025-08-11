@@ -173,6 +173,7 @@ const ConfirmModal = styled.div`
   justify-content: center;
   z-index: 1000;
   backdrop-filter: blur(4px);
+  cursor: pointer;
 `;
 
 const ConfirmContent = styled.div`
@@ -181,8 +182,11 @@ const ConfirmContent = styled.div`
   border-radius: 16px;
   width: 90%;
   max-width: 400px;
+  max-height: 90vh;
+  overflow-y: auto;
   position: relative;
   animation: slideIn 0.3s ease-out;
+  cursor: default;
   
   @keyframes slideIn {
     from {
@@ -193,6 +197,25 @@ const ConfirmContent = styled.div`
       transform: translateY(0);
       opacity: 1;
     }
+  }
+  
+  /* Стили для скроллбара */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
   }
 `;
 
@@ -252,8 +275,35 @@ const NotificationModal = styled(ConfirmModal)``;
 
 const NotificationContent = styled(ConfirmContent)``;
 
-const PointModalOverlay = styled(ConfirmModal)``;
-const PointModalContent = styled(ConfirmContent)`max-width: 500px;`;
+const PointModalOverlay = styled(ConfirmModal)`
+  cursor: pointer;
+`;
+
+const PointModalContent = styled(ConfirmContent)`
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  cursor: default;
+  
+  /* Стили для скроллбара */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+  }
+`;
 
 const LocateButton = styled.button`
   position: absolute;
@@ -645,8 +695,8 @@ const Quest = () => {
       </CompleteButton>
 
       {showLocationRequest && (
-        <LocationRequestModal>
-          <ConfirmContent>
+        <LocationRequestModal onClick={() => setShowLocationRequest(false)}>
+          <ConfirmContent onClick={e => e.stopPropagation()}>
             <ConfirmTitle>Доступ к геолокации</ConfirmTitle>
             <ConfirmText>
               Для работы с квестом необходим доступ к вашей геолокации.
@@ -665,8 +715,8 @@ const Quest = () => {
       )}
 
       {showExitConfirm && (
-        <ConfirmModal>
-          <ConfirmContent>
+        <ConfirmModal onClick={() => setShowExitConfirm(false)}>
+          <ConfirmContent onClick={e => e.stopPropagation()}>
             <ConfirmTitle>Выход из квеста</ConfirmTitle>
             <ConfirmText>
               Вы уверены, что хотите выйти из квеста?
@@ -685,8 +735,8 @@ const Quest = () => {
       )}
 
       {showCompleteConfirm && (
-        <ConfirmModal>
-          <ConfirmContent>
+        <ConfirmModal onClick={() => setShowCompleteConfirm(false)}>
+          <ConfirmContent onClick={e => e.stopPropagation()}>
             <ConfirmTitle>Завершение квеста</ConfirmTitle>
             <ConfirmText>
               Вы уверены, что хотите завершить квест?
@@ -705,8 +755,8 @@ const Quest = () => {
       )}
 
       {showNotification && (
-        <NotificationModal>
-          <NotificationContent>
+        <NotificationModal onClick={() => setShowNotification(false)}>
+          <NotificationContent onClick={e => e.stopPropagation()}>
             <ConfirmTitle>Уведомление</ConfirmTitle>
             <ConfirmText>{notificationMessage}</ConfirmText>
             <ButtonGroup>
@@ -722,8 +772,8 @@ const Quest = () => {
       )}
 
       {showPointModal && selectedPoint && (
-        <PointModalOverlay>
-          <PointModalContent>
+        <PointModalOverlay onClick={() => setShowPointModal(false)}>
+          <PointModalContent onClick={e => e.stopPropagation()}>
             <ConfirmTitle>{selectedPoint.name}</ConfirmTitle>
             {selectedPoint.photo && (
               <img src={selectedPoint.photo} alt={selectedPoint.name} style={{ width: '100%', borderRadius: 8, marginBottom: 8 }} />

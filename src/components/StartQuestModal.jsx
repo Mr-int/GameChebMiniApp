@@ -21,6 +21,8 @@ const ModalContent = styled.div`
   border-radius: 16px;
   width: 90%;
   max-width: 400px;
+  max-height: 90vh;
+  overflow-y: auto;
   position: relative;
   animation: slideIn 0.3s ease-out;
   
@@ -33,6 +35,25 @@ const ModalContent = styled.div`
       transform: translateY(0);
       opacity: 1;
     }
+  }
+  
+  /* Стили для скроллбара */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
   }
 `;
 
