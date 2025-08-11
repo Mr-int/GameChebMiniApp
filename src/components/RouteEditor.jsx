@@ -3,6 +3,181 @@ import styled from 'styled-components';
 import MapEditor from './MapEditor';
 import { updateRoute } from '../api';
 
+// Styled компонент для перетаскиваемой точки
+const DraggablePointContainer = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border-bottom: ${props => props.index < props.totalPoints - 1 ? '1px solid #e0e0e0' : 'none'};
+  background-color: ${props => {
+    if (props.isDragging) return '#f0f8ff';
+    if (props.isDragOver) return '#fff3cd';
+    if (props.index === 0) return '#d4edda';
+    if (props.index === props.totalPoints - 1) return '#f8d7da';
+    return '#fff';
+  }};
+  cursor: grab;
+  transition: all 0.2s ease;
+  user-select: none;
+  opacity: ${props => props.isDragging ? 0.5 : 1};
+  transform: translateY(${props => props.isDragging ? '-2px' : '0'});
+  box-shadow: ${props => props.isDragging ? '0 4px 12px rgba(0,0,0,0.15)' : 'none'};
+
+  &:hover {
+    background-color: ${props => {
+      if (props.index === 0) return '#c3e6cb';
+      if (props.index === props.totalPoints - 1) return '#f5c6cb';
+      return '#f8f9fa';
+    }};
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  &:active {
+    cursor: grabbing;
+  }
+`;
+
+// Компонент для перетаскиваемой точки
+const DraggablePoint = ({ 
+  pointData, 
+  index, 
+  totalPoints, 
+  onDragStart, 
+  onDragOver, 
+  onDrop, 
+  onDragEnd, 
+  isDragging, 
+  isDragOver,
+  onMoveUp,
+  onMoveDown
+}) => {
+  const handleDragStart = (e) => {
+    e.dataTransfer.setData('text/plain', index);
+    e.dataTransfer.effectAllowed = 'move';
+    onDragStart(index);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    onDragOver(index);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const draggedIndex = parseInt(e.dataTransfer.getData('text/plain'));
+    onDrop(draggedIndex, index);
+  };
+
+  const handleDragEnd = () => {
+    onDragEnd();
+  };
+
+  return (
+    <DraggablePointContainer
+      draggable
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+      onDragEnd={handleDragEnd}
+      index={index}
+      totalPoints={totalPoints}
+      isDragging={isDragging}
+      isDragOver={isDragOver}
+    >
+      <div style={{
+        background: index === 0 ? '#28a745' : index === totalPoints - 1 ? '#dc3545' : '#667eea',
+        color: 'white',
+        width: '28px',
+        height: '28px',
+        borderRadius: '50%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '12px',
+        fontWeight: '600',
+        marginRight: '12px',
+        flexShrink: 0
+      }}>
+        {index + 1}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ 
+          fontWeight: '500', 
+          color: '#333', 
+          marginBottom: '4px',
+          fontSize: '14px',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis'
+        }}>
+          {pointData.point?.name || 'Без названия'}
+        </div>
+        <div style={{ 
+          fontSize: '12px', 
+          color: '#666',
+          fontFamily: 'monospace'
+        }}>
+          {pointData.point?.latitude?.toFixed(6) || 'N/A'}, {pointData.point?.longitude?.toFixed(6) || 'N/A'}
+        </div>
+      </div>
+      <div style={{ 
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '2px',
+        marginLeft: '8px',
+        flexShrink: 0
+      }}>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onMoveUp(index);
+          }}
+          disabled={index === 0}
+          style={{
+            background: 'none',
+            border: 'none',
+            fontSize: '12px',
+            color: index === 0 ? '#ccc' : '#667eea',
+            cursor: index === 0 ? 'not-allowed' : 'pointer',
+            padding: '2px',
+            borderRadius: '2px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          title="Переместить вверх"
+        >
+          ▲
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onMoveDown(index);
+          }}
+          disabled={index === totalPoints - 1}
+          style={{
+            background: 'none',
+            border: 'none',
+            fontSize: '12px',
+            color: index === totalPoints - 1 ? '#ccc' : '#667eea',
+            cursor: index === totalPoints - 1 ? 'not-allowed' : 'pointer',
+            padding: '2px',
+            borderRadius: '2px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          title="Переместить вниз"
+        >
+          ▼
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const EditorOverlay = styled.div`
   position: fixed;
   top: 0;
@@ -204,6 +379,8 @@ const RouteEditor = ({ quests, onClose, onLogout }) => {
   const [editingPoints, setEditingPoints] = useState([]);
   const [hasChanges, setHasChanges] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [draggedIndex, setDraggedIndex] = useState(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
 
   const handleQuestSelect = (questId) => {
     setSelectedQuestId(questId);
@@ -260,6 +437,68 @@ const RouteEditor = ({ quests, onClose, onLogout }) => {
   const handleEditPoint = (point) => {
     // TODO: Реализовать редактирование точки
     alert(`Редактирование точки "${point.point.name}" будет добавлено в следующем этапе!`);
+  };
+
+  // Функции для drag-and-drop
+  const handleDragStart = (index) => {
+    setDraggedIndex(index);
+  };
+
+  const handleDragOver = (index) => {
+    if (draggedIndex !== null && draggedIndex !== index) {
+      setDragOverIndex(index);
+    }
+  };
+
+  const handleDrop = (draggedIndex, dropIndex) => {
+    if (draggedIndex === dropIndex) return;
+
+    const newPoints = [...editingPoints];
+    const draggedPoint = newPoints[draggedIndex];
+    
+    // Удаляем точку из старой позиции
+    newPoints.splice(draggedIndex, 1);
+    
+    // Вставляем точку в новую позицию
+    newPoints.splice(dropIndex, 0, draggedPoint);
+    
+    // Обновляем порядок точек
+    const updatedPoints = newPoints.map((point, index) => ({
+      ...point,
+      order: index + 1
+    }));
+
+    setEditingPoints(updatedPoints);
+    setHasChanges(true);
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleMoveUp = (index) => {
+    if (index > 0) {
+      const newPoints = [...editingPoints];
+      const temp = newPoints[index];
+      newPoints[index] = newPoints[index - 1];
+      newPoints[index - 1] = temp;
+      setEditingPoints(newPoints.map((point, idx) => ({ ...point, order: idx + 1 })));
+      setHasChanges(true);
+    }
+  };
+
+  const handleMoveDown = (index) => {
+    if (index < editingPoints.length - 1) {
+      const newPoints = [...editingPoints];
+      const temp = newPoints[index];
+      newPoints[index] = newPoints[index + 1];
+      newPoints[index + 1] = temp;
+      setEditingPoints(newPoints.map((point, idx) => ({ ...point, order: idx + 1 })));
+      setHasChanges(true);
+    }
   };
 
   return (
@@ -321,51 +560,54 @@ const RouteEditor = ({ quests, onClose, onLogout }) => {
               borderRadius: '8px', 
               marginBottom: '20px' 
             }}>
-              <h4 style={{ margin: '0 0 10px 0', color: '#333' }}>📋 Список точек маршрута:</h4>
-              <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+              <h4 style={{ margin: '0 0 10px 0', color: '#333' }}>
+                📋 Список точек маршрута (перетащите для изменения порядка):
+              </h4>
+              <div style={{ 
+                maxHeight: '300px', 
+                overflowY: 'auto',
+                border: '1px solid #e0e0e0',
+                borderRadius: '6px',
+                backgroundColor: 'white'
+              }}>
                 {editingPoints.length === 0 ? (
-                  <div style={{ color: '#666', fontStyle: 'italic' }}>
+                  <div style={{ 
+                    color: '#666', 
+                    fontStyle: 'italic',
+                    padding: '20px',
+                    textAlign: 'center'
+                  }}>
                     Нет точек в маршруте
                   </div>
                 ) : (
-                  editingPoints.map((pointData, index) => {
-                    console.log('Отрисовка точки:', pointData);
-                    return (
-                      <div key={pointData.point?.id || index} style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        padding: '8px',
-                        borderBottom: index < editingPoints.length - 1 ? '1px solid #e0e0e0' : 'none',
-                        backgroundColor: index === 0 ? '#d4edda' : index === editingPoints.length - 1 ? '#f8d7da' : '#fff'
-                      }}>
-                        <div style={{
-                          background: index === 0 ? '#28a745' : index === editingPoints.length - 1 ? '#dc3545' : '#667eea',
-                          color: 'white',
-                          width: '24px',
-                          height: '24px',
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '12px',
-                          fontWeight: '600',
-                          marginRight: '12px'
-                        }}>
-                          {pointData.order || index + 1}
-                        </div>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: '500', color: '#333', marginBottom: '4px' }}>
-                            {pointData.point?.name || 'Без названия'}
-                          </div>
-                          <div style={{ fontSize: '12px', color: '#666' }}>
-                            {pointData.point?.latitude?.toFixed(6) || 'N/A'}, {pointData.point?.longitude?.toFixed(6) || 'N/A'}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })
+                  editingPoints.map((pointData, index) => (
+                    <DraggablePoint
+                      key={pointData.point?.id || index}
+                      pointData={pointData}
+                      index={index}
+                      totalPoints={editingPoints.length}
+                      onDragStart={handleDragStart}
+                      onDragOver={handleDragOver}
+                      onDrop={handleDrop}
+                      onDragEnd={handleDragEnd}
+                      isDragging={draggedIndex === index}
+                      isDragOver={dragOverIndex === index}
+                      onMoveUp={handleMoveUp}
+                      onMoveDown={handleMoveDown}
+                    />
+                  ))
                 )}
               </div>
+              {editingPoints.length > 0 && (
+                <div style={{ 
+                  marginTop: '10px', 
+                  fontSize: '12px', 
+                  color: '#666',
+                  fontStyle: 'italic'
+                }}>
+                  💡 Перетащите точки или используйте стрелки ▲▼ для изменения их порядка в маршруте
+                </div>
+              )}
             </div>
 
             <ActionButtons>
