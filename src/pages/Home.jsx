@@ -266,8 +266,8 @@ const Home = () => {
 
   return (
     <HomeContainer>
-      <EditButton onClick={checkSession() ? handleLogout : handleOpenRouteEditor}>
-        {checkSession() ? '🚪 Выйти из редактора' : '🗺️ Редактировать маршруты'}
+      <EditButton onClick={handleOpenRouteEditor}>
+        🗺️ Редактировать маршруты
       </EditButton>
       <WelcomeText>Приветствуем вас</WelcomeText>
       <Divider />

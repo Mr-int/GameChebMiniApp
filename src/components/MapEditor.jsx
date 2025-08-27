@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Polyline, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 
 // Импортируем стили Leaflet
@@ -371,19 +371,7 @@ const MapEditor = ({ points = [], onPointsChange, questName }) => {
         Выбрано: {selectedPoints.length}/2
       </MapInfo>
 
-      <Instructions>
-        <strong>💡 Как использовать:</strong><br/>
-        • <strong>Зеленый маркер</strong> - начало маршрута<br/>
-        • <strong>Синие маркеры</strong> - обычные точки<br/>
-        • <strong>Серые маркеры</strong> - промежуточные точки<br/>
-        • <strong>Желтые маркеры</strong> - выбранные точки<br/>
-        • <strong>Красный маркер</strong> - конец маршрута<br/>
-        • <strong>Режим "Добавление точек"</strong> - кликайте по карте для новых точек<br/>
-        • <strong>Режим "Выбрать точки"</strong> - выберите 2 точки для промежуточной<br/>
-        • <strong>Перетаскивание</strong> - все маркеры можно двигать<br/>
-        • Если точек нет, нажмите "🧪 Добавить тестовые точки"<br/>
-        • Используйте кнопки ниже для управления маршрутом
-      </Instructions>
+      
       
       <MapControls>
         <ControlButton 
@@ -395,15 +383,7 @@ const MapEditor = ({ points = [], onPointsChange, questName }) => {
         >
           👁️ Просмотр
         </ControlButton>
-        <ControlButton 
-          className={mode === 'add' ? 'active' : ''} 
-          onClick={() => {
-            setMode('add');
-            setSelectedPoints([]);
-          }}
-        >
-          ➕ Добавить точку
-        </ControlButton>
+        
         <ControlButton 
           className={mode === 'select' ? 'active' : ''} 
           onClick={() => {
@@ -426,49 +406,8 @@ const MapEditor = ({ points = [], onPointsChange, questName }) => {
         >
           🗑️ Удалить последнюю
         </ControlButton>
-        <ControlButton 
-          onClick={optimizeRoute}
-        >
-          🔄 Оптимизировать маршрут
-        </ControlButton>
-        <ControlButton 
-          className="success"
-          onClick={() => {
-            if (points.length === 0) {
-              // Создаем тестовые точки для Москвы
-              const testPoints = [
-                {
-                  point: {
-                    id: 'start_1',
-                    name: 'Начальная точка',
-                    latitude: 55.7558,
-                    longitude: 37.6176,
-                    photo: null,
-                    description: 'Начало маршрута'
-                  },
-                  order: 1
-                },
-                {
-                  point: {
-                    id: 'end_1',
-                    name: 'Конечная точка',
-                    latitude: 55.7287,
-                    longitude: 37.6014,
-                    photo: null,
-                    description: 'Конец маршрута'
-                  },
-                  order: 2
-                }
-              ];
-              onPointsChange(testPoints);
-              showNotification('✅ Добавлены тестовые точки!', 'success');
-            } else {
-              showNotification('ℹ️ Точки уже есть в маршруте!', 'info');
-            }
-          }}
-        >
-          🧪 Добавить тестовые точки
-        </ControlButton>
+        
+        
       </MapControls>
 
       <MapContainerStyled>
@@ -520,32 +459,6 @@ const MapEditor = ({ points = [], onPointsChange, questName }) => {
                   click: () => handleMarkerClick(pointData.point.id)
                 }}
               >
-                <Popup>
-                  <div style={{ maxWidth: 220 }}>
-                    <h3 style={{ margin: '0 0 5px 0', fontSize: 16 }}>
-                      {pointData.point.name}
-                      {isSelected && <span style={{ color: '#ffc107', marginLeft: 5 }}>⭐</span>}
-                      {isIntermediate && <span style={{ color: '#6c757d', marginLeft: 5 }}>🔗</span>}
-                    </h3>
-                    <p style={{ margin: 0, fontSize: 14, color: '#666' }}>
-                      {pointData.point.description}
-                    </p>
-                    <div style={{ fontSize: 12, color: '#999', marginTop: 5 }}>
-                      Порядок: {pointData.order}
-                    </div>
-                    <div style={{ fontSize: 12, color: '#999' }}>
-                      Координаты: {pointData.point.latitude.toFixed(6)}, {pointData.point.longitude.toFixed(6)}
-                    </div>
-                    <div style={{ fontSize: 12, color: '#667eea', marginTop: 5, fontStyle: 'italic' }}>
-                      💡 Перетащите маркер для изменения позиции
-                    </div>
-                    {mode === 'select' && (
-                      <div style={{ fontSize: 12, color: '#ffc107', marginTop: 5, fontStyle: 'italic' }}>
-                        💡 Кликните для выбора точки
-                      </div>
-                    )}
-                  </div>
-                </Popup>
               </Marker>
             );
           })}

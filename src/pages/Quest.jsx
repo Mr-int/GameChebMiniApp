@@ -596,7 +596,9 @@ const Quest = () => {
   return (
     <QuestContainer>
       <HideAttribution />
-      <CloseButton onClick={() => setShowExitConfirm(true)}>✕</CloseButton>
+      
+      
+      
       
       <MapWrapper>
         {quest.points && quest.points.length > 0 && (
